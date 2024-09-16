@@ -42,5 +42,7 @@ jobs:
           context: .
           file: ./Dockerfile-example
           push: true
-          tags: pytincture/pytincture:example${{ steps.get_version.outputs.version }}
+          tags: |
+            pytincture/pytincture:example${{ steps.get_version.outputs.version }}
+            pytincture/pytincture:latest
           labels: ${{ steps.meta.outputs.labels }}
