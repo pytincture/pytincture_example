@@ -8,16 +8,12 @@ RUN pip install --upgrade pip
 ADD . /pyTincture/
 WORKDIR /pyTincture
 
-# Install build system and any necessary dependencies for using pyproject.toml
-# You can use pip's build system or poetry depending on your setup
-RUN pip install build
+# Install the build system dependencies for pyproject.toml
+RUN pip install setuptools wheel
 
-# Install the dependencies defined in pyproject.toml
-RUN python -m build .
-
-# Optional: If you're using Poetry
-# RUN pip install poetry
-# RUN poetry install --no-root
+# Install the dependencies from pyproject.toml
+# Ensure pyproject.toml supports PEP 517/518 with [build-system] defined
+RUN pip install .
 
 # Move to the example directory
 WORKDIR /pyTincture/example
