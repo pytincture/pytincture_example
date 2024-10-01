@@ -122,7 +122,7 @@ class py_ui(MainWindow):
 
         # Grid columns configuration using GridColumnConfig
         grid_columns = [
-            GridColumnConfig(width=300, id="title", header=[{"text": "Title"}]),
+            GridColumnConfig(width=300, id="title", header=[{"text": "TITle"}]),
             GridColumnConfig(width=200, id="authors", header=[{"text": "Authors"}]),
             GridColumnConfig(width=80, id="average_rating", header=[{"text": "Rating"}]),
             GridColumnConfig(width=150, id="publication_date", header=[{"text": "Publication date"}]),
