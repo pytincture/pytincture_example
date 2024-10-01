@@ -1,6 +1,6 @@
 """
 Example application using MainWindow subclass and layout management
-with a collapsible sidebar, content area, and a Tabbar containing a grid, chart, and form.
+with a collapsible sidebar, content area, a Tabbar containing a grid, calendar, and form.
 """
 import json
 import sys
@@ -9,13 +9,15 @@ from dhxpyt.layout import MainWindow
 from dhxpyt.toolbar import ButtonConfig, ToolbarConfig, SeparatorConfig  # Direct imports
 from dhxpyt.sidebar import NavItemConfig, SeparatorConfig, SpacerConfig, SidebarConfig  # Direct imports
 from dhxpyt.grid import GridConfig, GridColumnConfig  # Grid and GridColumnConfig
-from dhxpyt.chart import ChartConfig  # Chart and ChartConfig
+from dhxpyt.calendar import CalendarConfig
+from dhxpyt.form import FormConfig, InputConfig, DatepickerConfig  # Importing form-related classes
 from dhxpyt.layout import LayoutConfig, CellConfig  # Direct imports
 from dhxpyt.tabbar import TabbarConfig, TabConfig  # Tabbar-related imports
 from pyodide.ffi import create_proxy  # To handle JS signals
 import js
 
 from py_ui_data import py_ui_data  # Assuming this is pulling the book data
+
 
 class py_ui(MainWindow):
     def __init__(self):
@@ -104,13 +106,13 @@ class py_ui(MainWindow):
         # Add the HTML content to the top row (content_message)
         self.content_layout.attach_html(id="content_message", html="<h1 style='margin-left: 10px;'>Book Details and Ratings</h1>")
 
-        # Tabbar configuration with three tabs: Grid, Book Ratings Chart, Form
+        # Tabbar configuration with three tabs: Grid, Book Ratings Chart, Form, Calendar
         tabbar_config = TabbarConfig(
             views=[
                 TabConfig(id="tab1", tab="Grid View"),
                 TabConfig(id="tab2", tab="Book Ratings Chart"),
                 TabConfig(id="tab3", tab="Form View"),
-                TabConfig(id="tab4", tab="Tab 4")
+                TabConfig(id="tab4", tab="Calendar View")
             ],
             activeTab="tab1"  # Set Grid View as the active tab by default
         )
@@ -144,30 +146,28 @@ class py_ui(MainWindow):
         # Attach the grid to the first tab (tab1) using tabbar.add_grid
         self.book_grid = self.tabbar.add_grid(id="tab1", grid_config=grid_config)
 
-        # Assuming the structure of `data` matches the expected format
-        book_chart_data = [
-            {
-                "title": book["title"],
-                "average_rating": book["average_rating"],
-                "ratings_count": book["ratings_count"]
-            }
-            for book in json.loads(data)
+        # Calendar configuration
+        calendar_config = CalendarConfig(width="50%")
+        self.cal = self.tabbar.add_calendar(id="tab4", calendar_config=calendar_config)
+
+        # Add a form for the book details in tab3
+        form_fields = [
+            InputConfig(id="title", label="Title"),
+            InputConfig(id="authors", label="Authors"),
+            InputConfig(id="average_rating", label="Rating"),
+            DatepickerConfig(id="publication_date", label="Publication Date"),
+            InputConfig(id="isbn13", label="ISBN"),
+            InputConfig(id="language_code", label="Language"),
+            InputConfig(id="num_pages", label="Pages"),
+            InputConfig(id="ratings_count", label="Rating Count"),
+            InputConfig(id="text_reviews_count", label="Text Reviews Count"),
+            InputConfig(id="publisher", label="Publisher")
         ]
 
-        # Book Ratings Chart configuration
-        book_chart_config = ChartConfig(
-            type="bar",
-            series=[{
-                "value": "average_rating",
-                "text": "title"
-            }],
-            scales={},
-            data=json.dumps(book_chart_data),
-            css="dhx_widget--bg_white dhx_widget--bordered"
-        )
+        form_config = FormConfig(cols=form_fields)
 
-        # Attach the book ratings chart to the second tab (tab2) using tabbar.add_chart
-        self.tabbar.add_chart(id="tab2", chart_config=book_chart_config)
+        # Attach the form to the third tab (tab3) using tabbar.add_form
+        self.book_form = self.tabbar.add_form(id="tab3", form_config=form_config)
 
     def handle_toolbar_click(self, id, event):
         """Handle toolbar button clicks."""
