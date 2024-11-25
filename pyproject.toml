@@ -15,7 +15,7 @@ dependencies = [
     "requests==2.32.3",
     "wheel==0.45.1",
     "js==1.0",
-    "pyodide-py==0.26.3",
+    "pyodide-py==0.26.4",
     "pytincture==0.6.4",
     "dhxpyt==0.6.4"
 ]
