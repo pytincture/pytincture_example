@@ -1,2 +1,6 @@
 example/*.whl
 __pycache__
+env/
+build/
+*.egg-info/
+.DS_Store
