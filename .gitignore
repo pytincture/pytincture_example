@@ -1,4 +1,4 @@
 example/*.whl
-__pycache__
+example/__pycache__
 build/
 *.egg-info/
