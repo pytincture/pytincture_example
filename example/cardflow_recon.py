@@ -144,7 +144,7 @@ class cardflow_recon(MainWindow):
             groupable=True,
             group={"order": ["category"]},
             hideExpandCollapse=False,
-            sortDisabled=True,
+            sortDisabled=False,
             sortHeader="Income: $0.00"
         )
 
@@ -155,7 +155,7 @@ class cardflow_recon(MainWindow):
             groupable=True,
             group={"order": ["category"]},
             hideExpandCollapse=False,
-            sortDisabled=True,
+            sortDisabled=False,
             sortHeader="Expenses: $0.00"
         )
 
