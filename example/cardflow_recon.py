@@ -82,56 +82,118 @@ class cardflow_recon(MainWindow):
 
         # Sample data for Income panel
         income_data = [
+            # Total Sales transactions
             {
-                "id": "income1",
-                "category": "Total Sales",
+                "id": "income_trans1",
+                "subcategory": "Total Sales",
                 "date": "2025-01-31",
                 "memo": "Sale of Product A",
                 "amount": 1000.00,
                 "checked": True
             },
             {
-                "id": "income2",
-                "category": "Total Sales",
+                "id": "income_trans2",
+                "subcategory": "Total Sales",
                 "date": "2025-01-31",
                 "memo": "Sale of Product B",
                 "amount": 750.00,
                 "checked": True
             },
+            
+            # Received on Account transactions
             {
-                "id": "income3",
-                "category": "Received on Account",
+                "id": "income_trans3",
+                "subcategory": "Received on Account",
                 "date": "2025-01-31",
                 "memo": "Payment received",
                 "amount": 500.00,
+                "checked": True
+            },
+            
+            # Cash on hand (start) transactions
+            {
+                "id": "income_trans4",
+                "subcategory": "Cash on hand (start)",
+                "date": "2025-01-31",
+                "memo": "Opening balance",
+                "amount": 200.00,
+                "checked": True
+            },
+            
+            # Manual Accounts Receivable transactions
+            {
+                "id": "income_trans5",
+                "subcategory": "Manual Accounts Receivable",
+                "date": "2025-01-31",
+                "memo": "Adjustment entry",
+                "amount": 50.00,
+                "checked": True
+            },
+            {
+                "id": "income_trans6",
+                "subcategory": "Manual Accounts Receivable",
+                "date": "2025-01-31",
+                "memo": "Manual AR adjustment",
+                "amount": 75.00,
                 "checked": True
             }
         ]
 
         # Sample data for Expense panel
         expense_data = [
+            # Bank Deposits transactions
             {
-                "id": "expense1",
-                "category": "Bank Deposits",
+                "id": "expense_trans1",
+                "subcategory": "Bank Deposits",
                 "date": "2025-01-31",
                 "memo": "Deposit from sales",
                 "amount": 800.00,
                 "checked": True
             },
             {
-                "id": "expense2",
-                "category": "Bank Deposits",
+                "id": "expense_trans2",
+                "subcategory": "Bank Deposits",
                 "date": "2025-01-31",
                 "memo": "Additional deposit",
                 "amount": 600.00,
                 "checked": True
             },
+            
+            # Cash paidouts transactions
             {
-                "id": "expense3",
-                "category": "Cash paidouts",
+                "id": "expense_trans3",
+                "subcategory": "Cash paidouts",
                 "date": "2025-01-31",
                 "memo": "Payment for services",
                 "amount": 500.00,
+                "checked": True
+            },
+            {
+                "id": "expense_trans4",
+                "subcategory": "Cash paidouts",
+                "date": "2025-01-31",
+                "memo": "Payment for supplies",
+                "amount": 300.00,
+                "checked": True
+            },
+            
+            # Cash on hand (end) transactions
+            {
+                "id": "expense_trans5",
+                "subcategory": "Cash on hand (end)",
+                "date": "2025-01-31",
+                "memo": "Closing balance",
+                "amount": 150.00,
+                "checked": True
+            },
+            
+            # Applied Prepayments transactions
+            {
+                "id": "expense_trans6",
+                "subcategory": "Applied Prepayments",
+                "date": "2025-01-31",
+                "memo": "Prepayment applied",
+                "amount": 200.00,
                 "checked": True
             }
         ]
@@ -142,7 +204,7 @@ class cardflow_recon(MainWindow):
             data=income_data,
             editable=True,
             groupable=True,
-            group={"order": ["category"]},
+            group={"order": ["subcategory"]},
             hideExpandCollapse=False,
             sortDisabled=False,
             sortHeader="Income: $0.00"
@@ -153,7 +215,7 @@ class cardflow_recon(MainWindow):
             data=expense_data,
             editable=True,
             groupable=True,
-            group={"order": ["category"]},
+            group={"order": ["subcategory"]},
             hideExpandCollapse=False,
             sortDisabled=False,
             sortHeader="Expenses: $0.00"
@@ -208,6 +270,29 @@ class cardflow_recon(MainWindow):
 
     def handle_card_change(self, event):
         """Handle changes to any card in either CardFlow."""
+        # Check if this is a checkbox change event
+        if hasattr(event, "column") and event.column == "checkbox":
+            # Update the data item's checked status in the CardFlow data
+            if hasattr(event, "value") and hasattr(event, "id"):
+                # Find the item in the data and update it
+                cardflow_id = event.target.id if hasattr(event, "target") and hasattr(event.target, "id") else None
+                
+                if cardflow_id == "income_panel":
+                    data = self.income_cardflow.cardflow.config.data
+                    # Find and update the changed item
+                    for item in data:
+                        if item.id == event.id:
+                            item.checked = event.value
+                            break
+                elif cardflow_id == "expense_panel":
+                    data = self.expense_cardflow.cardflow.config.data
+                    # Find and update the changed item
+                    for item in data:
+                        if item.id == event.id:
+                            item.checked = event.value
+                            break
+        
+        # Recalculate totals
         self.recalc_totals()
 
     def handle_override_change(self, event):
@@ -243,15 +328,43 @@ class cardflow_recon(MainWindow):
 
         # Calculate totals
         total_income = 0
-        for item in income_data:
-            if not hasattr(item, "checked") or item.checked:
-                total_income += item.amount
-
         total_expenses = 0
+        
+        # Keep track of subcategory totals
+        income_subcategories = {}
+        expense_subcategories = {}
+        
+        # Process income transactions and calculate subcategory totals
+        for item in income_data:
+            subcategory = item.subcategory if hasattr(item, "subcategory") else "Uncategorized"
+            is_checked = item.checked if hasattr(item, "checked") else True
+            
+            # Initialize subcategory if not exists
+            if subcategory not in income_subcategories:
+                income_subcategories[subcategory] = 0
+            
+            # Add amount to subcategory total if checked
+            if is_checked:
+                amount = item.amount if hasattr(item, "amount") else 0
+                income_subcategories[subcategory] += amount
+                total_income += amount
+        
+        # Process expense transactions and calculate subcategory totals
         for item in expense_data:
-            if not hasattr(item, "checked") or item.checked:
-                total_expenses += item.amount
-
+            subcategory = item.subcategory if hasattr(item, "subcategory") else "Uncategorized"
+            is_checked = item.checked if hasattr(item, "checked") else True
+            
+            # Initialize subcategory if not exists
+            if subcategory not in expense_subcategories:
+                expense_subcategories[subcategory] = 0
+            
+            # Add amount to subcategory total if checked
+            if is_checked:
+                amount = item.amount if hasattr(item, "amount") else 0
+                expense_subcategories[subcategory] += amount
+                total_expenses += amount
+        
+        # Calculate net total
         net_total = total_income - total_expenses
 
         # Update panel headers with totals
@@ -259,26 +372,34 @@ class cardflow_recon(MainWindow):
         self.expense_cardflow.cardflow.config.sortHeader = f"Expenses: ${total_expenses:,.2f}"
 
         # Update net total display
-        html_content = f"<div style='font-size: 1.5rem; font-weight: 700; text-align: center; padding: 1rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);'>${net_total:,.2f}</div>"
-        
-        # Update net total styling
         if net_total == 0:
             html_content = f"<div style='font-size: 1.5rem; font-weight: 700; text-align: center; padding: 1rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); color: #28a745; background-color: #e6f9e6;'>${net_total:,.2f}</div>"
-            # Hide the override checkbox and disable the button
+            # Hide the override checkbox and enable the close button
             self.close_form.form.setValue({
                 "overrideCheckbox": False
             })
-            self.close_form.form.config.hidden = True
-            self.close_form.form.config.disabled = True
+            # Hide the override checkbox and enable the button
+            checkbox_item = self.close_form.form.getItem("overrideCheckbox")
+            if checkbox_item:
+                checkbox_item.hide()
+                
+            button_item = self.close_form.form.getItem("closeBooksBtn")
+            if button_item:
+                button_item.enable()
         else:
             html_content = f"<div style='font-size: 1.5rem; font-weight: 700; text-align: center; padding: 1rem; margin-bottom: 2rem; border-radius: 8px; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); color: #dc3545; background-color: #f9e6e6;'>${net_total:,.2f}</div>"
-            # Show the form and update button state
-            self.close_form.form.config.hidden = False
+            # Show the override checkbox and update button state
+            checkbox_item = self.close_form.form.getItem("overrideCheckbox")
+            if checkbox_item:
+                checkbox_item.show()
+                
             override_checked = self.close_form.form.getValue("overrideCheckbox")
-            if override_checked:
-                self.close_form.form.config.disabled = False
-            else:
-                self.close_form.form.config.disabled = True
+            button_item = self.close_form.form.getItem("closeBooksBtn")
+            if button_item:
+                if override_checked:
+                    button_item.enable()
+                else:
+                    button_item.disable()
             
         # Set the updated HTML content
         self.net_total_layout.attach_html(id="net_total_display", html=html_content)
