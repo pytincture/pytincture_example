@@ -128,17 +128,14 @@ class py_ui(MainWindow):
             GridColumnConfig(width=200, id="publisher", header=[{"text": "Publisher"}])
         ]
 
-        # Fetching data from py_ui_data
-        data = py_ui_data().dataset()
-
-        # Grid configuration with columns
-        grid_config = GridConfig(
-            columns=grid_columns,
-            data=data
-        )
+        # Grid configuration with columns (data loaded asynchronously after init)
+        grid_config = GridConfig(columns=grid_columns)
 
         # Attach the grid to the first tab (tab1) using tabbar.add_grid
         self.book_grid = self.tabbar.add_grid(id="tab1", grid_config=grid_config)
+
+        import asyncio
+        asyncio.ensure_future(self._load_grid_data())
 
         # Calendar configuration
         calendar_config = CalendarConfig(width="50%")
@@ -162,6 +159,12 @@ class py_ui(MainWindow):
 
         # Attach the form to the third tab (tab3) using tabbar.add_form
         self.book_form = self.tabbar.add_form(id="tab3", form_config=form_config)
+
+    async def _load_grid_data(self):
+        import json
+        raw = await py_ui_data().dataset()
+        data = json.loads(raw) if isinstance(raw, str) else raw
+        self.book_grid.data.parse(data)
 
     def handle_toolbar_click(self, id, event):
         """Handle toolbar button clicks."""
