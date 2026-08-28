@@ -1,2 +1,4 @@
 example/*.whl
-__pycache__
+__pycache__/
+*.egg-info/
+.venv*/

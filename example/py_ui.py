@@ -2,9 +2,6 @@
 Example application using MainWindow subclass and layout management
 with a collapsible sidebar, content area, a Tabbar containing a grid, calendar, and form.
 """
-import json
-import sys
-
 from dhxpyt.layout import MainWindow
 from dhxpyt.toolbar import ButtonConfig, ToolbarConfig, SeparatorConfig  # Direct imports
 from dhxpyt.sidebar import NavItemConfig, SeparatorConfig, SpacerConfig, SidebarConfig  # Direct imports
@@ -13,9 +10,6 @@ from dhxpyt.calendar import CalendarConfig
 from dhxpyt.form import FormConfig, InputConfig, DatepickerConfig  # Importing form-related classes
 from dhxpyt.layout import LayoutConfig, CellConfig  # Direct imports
 from dhxpyt.tabbar import TabbarConfig, TabConfig  # Tabbar-related imports
-from pyodide.ffi import create_proxy  # To handle JS signals
-import js
-
 from py_ui_data import py_ui_data  # Assuming this is pulling the book data
 
 
@@ -184,8 +178,3 @@ class py_ui(MainWindow):
             # Collapse the sidebar (hide text, show only icons)
             self.sidebar.toggle()
             self.sidebar_collapsed = True
-
-
-if __name__ == "__main__" and sys.platform != "emscripten":
-    from pytincture import launch_service
-    launch_service()
