@@ -4,4 +4,7 @@ from pytincture.dataclass import backend_for_frontend
 class py_ui_data:
     def dataset(self):
         return open("dataset.json", "r").read()
-    
+
+    def ping(self, value):
+        """Small authenticated BFF operation used by the load profile."""
+        return {"value": value}

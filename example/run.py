@@ -20,6 +20,9 @@ if __name__ == "__main__":
                 "1nAFATBkZHf7FYm10EoAqw$"
                 'bcQeiCVDJV5nH2dSoHhYtUlyLARtmS1ce7UBSUXokYQ"}'
             ),
+            # The disposable example serves plain HTTP on localhost. Production
+            # deployments must use HTTPS and leave secure cookies enabled.
+            "AUTH_SESSION_HTTPS_ONLY": "false",
             "ENABLE_USER_LOGIN": "true",
             "LOGIN_HELP_TEXT": (
                 f"Demo credentials: {DEMO_EMAIL} / {DEMO_PASSWORD}"
