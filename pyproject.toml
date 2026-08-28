@@ -12,13 +12,10 @@ authors = [
     { name = "Your Name", email = "schapman1974@gmail.com" }
 ]
 dependencies = [
-    "requests==2.32.5",
-    "wheel==0.45.1",
-    "js==1.0",
-    "pyodide-py==0.27.3",
-    "pytincture==0.9.16",
-    "dhxpyt==0.8.4"
+    "pytincture[password]==1.0.0rc1",
+    "dhxpyt==0.9.16",
 ]
+requires-python = ">=3.13"
 
 [project.urls]
 Homepage = "https://github.com/pytincture/pytincture_example"
