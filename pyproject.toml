@@ -17,6 +17,10 @@ dependencies = [
 ]
 requires-python = ">=3.13"
 
+[project.optional-dependencies]
+browser-test = ["playwright>=1.58,<2"]
+load-test = ["httpx>=0.28,<1"]
+
 [project.urls]
 Homepage = "https://github.com/pytincture/pytincture_example"
 

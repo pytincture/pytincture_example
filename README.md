@@ -29,4 +29,24 @@ docker run --rm -p 8070:8070 pytincture-example
 ```
 
 Set `PYTINCTURE_EXAMPLE_SESSION_SECRET` to a private value when exposing the
-demo outside a disposable local environment.
+demo outside a disposable local environment. The launcher disables secure-only
+cookies for its plain-HTTP localhost workflow; production deployments must use
+HTTPS with `AUTH_SESSION_HTTPS_ONLY=true`.
+
+## Load test
+
+The CI load profile creates 20 independent authenticated sessions and makes
+500 concurrent BFF calls. It requires zero errors, a p95 BFF latency no greater
+than 500 ms, and at least 20 requests per second. Results are retained as a
+JSON workflow artifact.
+
+Run the same profile locally:
+
+```bash
+.venv/bin/pip install '.[load-test]'
+.venv/bin/python tests/load_test.py --output load-results.json
+```
+
+These are regression thresholds for the GitHub runner and local development,
+not production capacity guarantees. Use the command-line options to establish
+deployment-specific concurrency, latency, and throughput budgets.

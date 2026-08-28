@@ -2,3 +2,4 @@ example/*.whl
 __pycache__/
 *.egg-info/
 .venv*/
+load-results*.json
