@@ -54,3 +54,17 @@ The example endpoint caps `page_size` at 100 regardless of the caller's value.
 These are regression thresholds for the GitHub runner and local development,
 not production capacity guarantees. Use the command-line options to establish
 deployment-specific stages, page sizes, latency, and throughput budgets.
+
+## RC observation record
+
+CI combines the authenticated browser result and paginated load result into a
+versioned `rc1-observation.json` document. It records the exact example commit,
+Pytincture candidate, dhxpyt widgetset, UTC timestamp, Actions run URL,
+environment, SHA-256 hash of each raw result, embedded measurements, and any
+automatically detected findings. The document follows
+[`contracts/rc-observation-v1.schema.json`](contracts/rc-observation-v1.schema.json)
+and is retained as the `pytincture-rc1-observation` workflow artifact.
+
+This is application observation evidence, not automatic release approval. A
+reviewer must link an accepted run from the Pytincture qualification record;
+failed observations or discovered P0/P1 defects remain release blockers.

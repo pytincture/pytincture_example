@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/pytincture/pytincture_example/contracts/rc-observation-v1.schema.json",
+  "title": "Pytincture example release-candidate observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "application",
+    "application_version",
+    "candidate",
+    "widgetset",
+    "status",
+    "observed_at",
+    "commit_sha",
+    "evidence_url",
+    "run",
+    "environment",
+    "result_sha256",
+    "results",
+    "findings"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://github.com/pytincture/pytincture_example/contracts/rc-observation-v1.schema.json"
+    },
+    "schema_version": { "const": 1 },
+    "application": { "const": "pytincture_example" },
+    "application_version": { "type": "string", "minLength": 1 },
+    "candidate": { "type": "string", "minLength": 1 },
+    "widgetset": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["passed", "failed"] },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "commit_sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "evidence_url": { "type": "string", "format": "uri" },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "attempt", "event", "ref"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "attempt": { "type": "integer", "minimum": 1 },
+        "event": { "type": "string", "minLength": 1 },
+        "ref": { "type": "string", "minLength": 1 }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["python", "platform"],
+      "properties": {
+        "python": { "type": "string", "minLength": 1 },
+        "platform": { "type": "string", "minLength": 1 }
+      }
+    },
+    "result_sha256": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["browser_acceptance", "authenticated_load"],
+      "properties": {
+        "browser_acceptance": { "$ref": "#/$defs/sha256" },
+        "authenticated_load": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "results": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["browser_acceptance", "authenticated_load"],
+      "properties": {
+        "browser_acceptance": { "type": "object" },
+        "authenticated_load": { "type": "object" }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+  }
+}
