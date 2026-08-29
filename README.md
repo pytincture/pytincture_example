@@ -35,10 +35,13 @@ HTTPS with `AUTH_SESSION_HTTPS_ONLY=true`.
 
 ## Load test
 
-The CI load profile creates 20 independent authenticated sessions and makes
-500 concurrent BFF calls. It requires zero errors, a p95 BFF latency no greater
-than 500 ms, and at least 20 requests per second. Results are retained as a
-JSON workflow artifact.
+The CI load profile creates 250 independent authenticated sessions, then runs
+stages with 50, 100, and 250 active sessions. Each request exercises a realistic
+server-paginated grid response containing the frontend maximum of 100 records.
+Each session makes four calls, for 1,600 calls and 160,000 returned records over
+the complete profile. Every stage requires zero errors, a p95 BFF latency no
+greater than 1,000 ms, and at least 20 requests per second. Results are retained
+as a JSON workflow artifact.
 
 Run the same profile locally:
 
@@ -47,6 +50,7 @@ Run the same profile locally:
 .venv/bin/python tests/load_test.py --output load-results.json
 ```
 
+The example endpoint caps `page_size` at 100 regardless of the caller's value.
 These are regression thresholds for the GitHub runner and local development,
 not production capacity guarantees. Use the command-line options to establish
-deployment-specific concurrency, latency, and throughput budgets.
+deployment-specific stages, page sizes, latency, and throughput budgets.
