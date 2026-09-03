@@ -34,6 +34,10 @@ THEMES = ("light", "dark")
 THEME_STORAGE_KEY = "py_ui.theme"
 
 
+# Seed dates are M/D/YYYY with no leading zeros; see form_window.DATE_FORMAT.
+DATE_FORMAT = "%n/%j/%Y"
+
+
 # Label beside the control rather than above it, with minimal padding.
 COMPACT_FIELD = {
     "labelPosition": "left",
@@ -177,8 +181,11 @@ class py_ui(MainWindow):
             )
         ]
 
-        # Grid configuration with columns (data loaded asynchronously after init)
-        grid_config = GridConfig(columns=grid_columns)
+        # Grid configuration with columns (data loaded asynchronously after init).
+        # selection defaults to False, which is why the grid had no highlight;
+        # keyNavigation already defaults to True, so row selection also makes
+        # the arrow keys move the highlight.
+        grid_config = GridConfig(columns=grid_columns, selection="row")
 
         # Attach the grid to the first tab (tab1) using tabbar.add_grid
         self.book_grid = self.tabbar.add_grid(id="tab1", grid_config=grid_config)
@@ -216,7 +223,10 @@ class py_ui(MainWindow):
         form_fields.insert(
             3,
             DatepickerConfig(
-                id="publication_date", label="Publication Date", **COMPACT_FIELD
+                id="publication_date",
+                label="Publication Date",
+                dateFormat=DATE_FORMAT,
+                **COMPACT_FIELD,
             ),
         )
 

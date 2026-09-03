@@ -23,6 +23,12 @@ COMPACT_FIELD = {
     "padding": "2px",
 }
 
+# The seed dates are M/D/YYYY with no leading zeros ("9/16/2006").
+# DatepickerConfig defaults to dateFormat="%d/%m/%y", which misreads them and
+# writes the misreading back on save, so every save corrupted the date.
+# %n and %j are the no-leading-zero month and day.
+DATE_FORMAT = "%n/%j/%Y"
+
 FIELDS = (
     ("title", "Title"),
     ("authors", "Authors"),
@@ -44,7 +50,7 @@ class FormExample(Window):
                 # Sized so all eight compact rows fit without scrolling and
                 # the title value is not truncated.
                 width=560,
-                height=520,
+                height=572,
                 left=100,
                 top=100,
                 modal=True,
@@ -68,7 +74,10 @@ class FormExample(Window):
         ]
         fields.append(
             DatepickerConfig(
-                id="publication_date", label="Publication Date", **COMPACT_FIELD
+                id="publication_date",
+                label="Publication Date",
+                dateFormat=DATE_FORMAT,
+                **COMPACT_FIELD,
             )
         )
         fields.append(
@@ -101,14 +110,21 @@ class FormExample(Window):
             asyncio.ensure_future(self._save())
 
     async def _save(self):
-        """Write the edited fields back through the BFF."""
+        """Write the edited fields back through the BFF, then close on success."""
         try:
             if self._record_id is None:
                 return
             values = self.form.getValue().to_py()
             result = await self.data.update_book_async(self._record_id, values)
-            if self.on_saved is not None and result.get("ok"):
+            if not result.get("ok"):
+                # Leave the window open so the edit is not lost on a failure.
+                js.console.error("save rejected: " + str(result.get("error")))
+                return
+            if self.on_saved is not None:
                 self.on_saved(result["record"])
+            # Closing is the confirmation: the window stays put on failure, so
+            # it disappearing is what tells you the write landed.
+            self.hide()
         except Exception:
             import traceback
             js.console.error("save failed: " + traceback.format_exc())
