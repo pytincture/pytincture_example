@@ -61,7 +61,11 @@ def main() -> None:
     try:
         health = wait_for_service()
         evidence["health"] = health
-        assert health == {"status": "ok", "version": "1.0.0rc1"}
+        # Assert against the installed release rather than a hard-pinned
+        # version, so the check survives a Pytincture upgrade.
+        from pytincture import __version__ as pytincture_version
+
+        assert health == {"status": "ok", "version": pytincture_version}
 
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch(headless=True)
