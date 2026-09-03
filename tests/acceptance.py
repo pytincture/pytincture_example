@@ -104,20 +104,27 @@ def main() -> None:
 
             bff = page.evaluate(
                 """async () => {
+                    // rc5 renamed the CSRF cookie and varies it by
+                    // deployment; the frontend publishes the name it used.
+                    const cookieName =
+                        globalThis.__pytinctureCsrfCookieName;
                     const csrf = document.cookie
                         .split(';')
                         .map(value => value.trim().split('='))
-                        .find(([name]) => name === 'pytincture_csrf')
+                        .find(([name]) => name === cookieName)
                         ?.slice(1).join('=') || '';
+                    // rc5 namespaces classcall routes under the
+                    // application name; the unprefixed rc1 path 404s.
                     const response = await fetch(
-                        '/classcall/py_ui_data.py/py_ui_data/dataset',
+                        '/py_ui/classcall/py_ui_data.py/py_ui_data/dataset',
                         {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-Token': csrf,
                             },
-                            body: JSON.stringify({kwargs: {}}),
+                            // rc5 requires both keys in a BFF body.
+                            body: JSON.stringify({args: [], kwargs: {}}),
                         },
                     );
                     return {status: response.status, body: await response.text()};
