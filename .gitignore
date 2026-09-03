@@ -7,3 +7,4 @@ acceptance-results*.json
 load-results*.json
 rc1-observation*.json
 observation-input/
+build/
