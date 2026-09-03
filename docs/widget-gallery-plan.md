@@ -114,7 +114,7 @@ instead of rendering a hardcoded fixture.
 
 | Widget | Workflow shown | Derived from |
 |---|---|---|
-| **grid** | Browse, filter per column, double-click to edit, save | `dataset()` / `update_book()` *(exists)* |
+| **grid** | Browse, filter per column, select, keyboard-navigate, right-click or Enter to edit, save | `dataset()` / `update_book()` *(exists)* |
 | **pagination** | Page the catalog server-side, 10k rows | `dataset_page()` *(exists)* |
 | **chart** | Ratings distribution; pages vs rating scatter | new `rating_histogram()` |
 | **tree** | Publisher → author → title drill-down | new `catalog_tree()` |
@@ -139,6 +139,90 @@ instead of rendering a hardcoded fixture.
 `store_schema.py` without divergence — that is what the shared-schema module in
 #62 is for.
 
+## Grid interaction
+
+The grid is the demo everything else is copied from, so it should show the
+interaction idioms a real data table needs, not just rendering. Three additions,
+all on `demos/grid.py`:
+
+### Selection highlight
+
+`GridConfig` already takes `selection` and `multiselection` — but `selection`
+**defaults to `False`**, which is why the current grid has no highlight at all.
+`selection="row"` gives row highlighting; `"cell"` and `"complex"` are the other
+modes. The wrapper exposes `select_cell()`, `get_selected_cells()` and
+`unselect_cell()`, which reach `grid.selection` on the underlying widget.
+
+Decide row vs cell selection deliberately: row selection reads better for a
+catalogue and makes "the selected book" unambiguous for the keyboard and
+context-menu actions below, while cell selection is what makes per-cell editing
+legible.
+This plan assumes `selection="row"`.
+
+### Keyboard navigation
+
+`GridConfig(keyNavigation=...)` **already defaults to `True`**, so arrow keys are
+live as soon as selection is on — the two settings only look independent. Up and
+down move the highlight for free once `selection` is set.
+
+Enter-to-edit is the part that needs code. The wrapper has no `on_keydown` for
+Grid, so bind through the generic escape hatch:
+
+```python
+self.grid.add_event_handler("keydown", self._on_grid_key)
+```
+
+`add_event_handler` wraps the handler in `create_proxy` and registers it on
+`grid.events`, so the demo's `teardown()` has to release it — this is exactly the
+leak the demo contract's `teardown()` exists for.
+
+The handler opens the existing modal on the selected row, which makes Enter and
+double-click the same action through two different affordances.
+
+### Right-click context menu
+
+`on_cell_right_click(row, column, event)` exists on Grid and gives both the row
+and the raw `MouseEvent`.
+
+**The mounting story has a wrinkle.** dhx exports both `Menu` and `ContextMenu`,
+and `showAt` is defined **only on `ContextMenu.prototype`**. dhxpyt's `Menu`
+wraps `dhx.Menu` and its `show_at()` calls `showAt` on that instance, so
+`Menu.show_at()` throws — there is no `ContextMenu` wrapper in the widgetset at
+all. Two ways out, and this belongs with the Phase 0 mounting decision above:
+
+1. **Preferred:** add a `ContextMenu` wrapper to `dhx_pytincture_widgetset`
+   alongside `Menu`, and fix or remove `Menu.show_at()`.
+2. Construct `js.dhx.ContextMenu.new(None, config)` directly in the demo and
+   document the asymmetry, as `form_window.py` already does for `Window`.
+
+Either way `showAt` accepts a `MouseEvent` and positions at the cursor, so the
+event from `on_cell_right_click` can be passed straight through — no manual
+coordinate maths.
+
+The menu starts with one item, **Edit**, opening the same modal as Enter and
+double-click. One action reached three ways is the point: it shows the wiring
+cost of each affordance against an identical outcome.
+
+### Where it lands
+
+With the grid demo in **Phase 0**, since that demo is the template every later
+one copies. The `ContextMenu` question folds into the Phase 0 mounting decision;
+if the widgetset change does not land, option 2 keeps Phase 0 unblocked.
+
+### Testing
+
+Three additions to the smoke loop, all on top of the existing grid checks:
+
+- click a row, assert exactly one row carries the selected class
+- focus the grid, send `ArrowDown` twice and `Enter`, assert the modal opens on
+  the third row
+- right-click a row, assert the context menu appears, click **Edit**, assert the
+  modal opens on that row
+
+Selector caution, learned from the chart tab: assert against a class the demo
+sets itself wherever possible, rather than guessing dhx internals. Read the
+rendered DOM before writing the assertion.
+
 ## Phases
 
 Each phase is a PR. Phases 1–4 are independent of each other once Phase 0 lands,
@@ -151,7 +235,8 @@ so they can be worked in any order or in parallel.
 - Rewrite `py_ui.py` as a shell: chrome, sidebar built from the registry,
   content host, and demo swap with teardown.
 - Port the existing grid work to `demos/grid.py` as the reference demo — the one
-  every later demo is copied from.
+  every later demo is copied from — and add the selection, keyboard and
+  context-menu interaction described above.
 - Extend `ui_smoke.py` with a registry-driven loop: for every demo, navigate to
   it, assert its root widget rendered exactly once, assert no console errors.
   This is the harness that makes Phases 1–4 cheap to verify.
@@ -228,6 +313,8 @@ painful, split the loop into `--demos data,chrome,...` groups and fan out in CI.
 | `PaginationConfig` needs a live `DataCollection` | Prove the binding in Phase 1 before designing the rest of that demo |
 | Three widgets have no mounting helper | Phase 0 decision; widgetset change preferred over a workaround |
 | `create_proxy` handlers leak on navigation | `teardown()` in the contract; the build-once smoke check catches regressions |
+| `Menu.show_at()` is broken — `showAt` exists only on dhx's `ContextMenu`, which the widgetset does not wrap | Phase 0 decision: add a `ContextMenu` wrapper, or construct `js.dhx.ContextMenu` directly in the grid demo |
+| Grid keyboard events have no wrapper method | Bind `"keydown"` via `add_event_handler()`; release the proxy in `teardown()` |
 | Kanban/chat/cardpanel config shapes are unverified | Each has a nested config family (`KanbanCardConfig`, `ChatMessageConfig`, `CardPanelCardConfig`); read the generated reference page before writing the demo |
 | Smoke suite runtime grows past a usable CI slot | Group flag and CI fan-out, if needed |
 | Scope: 24 demos is a lot of surface | Phases are independent PRs; the gallery is useful and shippable at any point after Phase 0 |
