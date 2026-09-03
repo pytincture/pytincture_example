@@ -351,12 +351,19 @@ def service_environment(peak_sessions: int) -> dict[str, str]:
       * BFF request-body ingress is capped per peer at
         BFF_REQUEST_INGRESS_MAX_CONCURRENCY_PER_PEER (16), and every session
         here comes from one host;
-      * BFF execution admits BFF_MAX_CONCURRENCY calls (32) with a queue of 64.
+      * BFF execution queues past BFF_MAX_CONCURRENCY (32) but only BFF_MAX_QUEUE
+        deep (64), and rejects beyond that.
 
-    Widen all four for the benchmark, scaled to the peak session count, and
-    record the values in the results so the evidence states plainly which
-    limits the numbers were measured under. These are real protections and a
-    real deployment sees many peers: never carry them into one.
+    Widen these for the benchmark, scaled to the peak session count, and record
+    the values in the results so the evidence states plainly which limits the
+    numbers were measured under. These are real protections and a real
+    deployment sees many peers: never carry them into one.
+
+    Note what is *not* widened: BFF_MAX_CONCURRENCY. Its queue is deepened so
+    nothing is rejected, but the number of calls executing at once stays at
+    Pytincture's default. Raising it would put hundreds of threads on a
+    two-core CI runner, and the profile would measure thread thrash instead of
+    the server.
     """
     headroom = max(peak_sessions * 2, 100)
     environment = dict(os.environ)
@@ -364,11 +371,15 @@ def service_environment(peak_sessions: int) -> dict[str, str]:
     environment.update(
         {
             "AUTH_LOGIN_RATE_LIMIT_ATTEMPTS": str(headroom),
-            "BFF_MAX_CONCURRENCY": str(headroom),
-            "BFF_MAX_QUEUE": str(headroom * 2),
+            # Admission *queues* are widened; admission *concurrency* is left
+            # at Pytincture's default. Queueing costs latency, which the
+            # profile measures; raising concurrency instead would put hundreds
+            # of threads on a two-core runner and measure thread thrash rather
+            # than the server.
+            "BFF_MAX_QUEUE": str(headroom * 4),
             "BFF_REQUEST_INGRESS_MAX_CONCURRENCY": str(headroom),
             "BFF_REQUEST_INGRESS_MAX_CONCURRENCY_PER_PEER": str(headroom),
-            "BFF_REQUEST_INGRESS_MAX_QUEUE": str(headroom * 2),
+            "BFF_REQUEST_INGRESS_MAX_QUEUE": str(headroom * 4),
         }
     )
     return environment
@@ -461,7 +472,6 @@ def main() -> None:
                             set(LOAD_PROFILE_LIMITS)
                             | {
                                 "AUTH_LOGIN_RATE_LIMIT_ATTEMPTS",
-                                "BFF_MAX_CONCURRENCY",
                                 "BFF_MAX_QUEUE",
                                 "BFF_REQUEST_INGRESS_MAX_CONCURRENCY",
                                 "BFF_REQUEST_INGRESS_MAX_CONCURRENCY_PER_PEER",
