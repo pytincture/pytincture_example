@@ -31,6 +31,8 @@ DB_PATH = Path(
 
 _init_lock = threading.Lock()
 _initialised = False
+_local = threading.local()
+_total = None
 
 
 def describe() -> str:
@@ -38,12 +40,25 @@ def describe() -> str:
 
 
 def connect() -> sqlite3.Connection:
-    """One short-lived connection per call; WAL makes that cheap and safe."""
+    """One connection per thread, reused for the life of that thread.
+
+    The BFF runs calls on a worker pool, so a connection per call meant a
+    connect plus two PRAGMAs on every request. sqlite3 connections are bound
+    to their creating thread by default, which is exactly what thread-local
+    storage gives us, and WAL lets those readers run concurrently.
+
+    Callers keep using `with connect() as connection:` -- that commits or
+    rolls back the transaction, it does not close the connection.
+    """
+    connection = getattr(_local, "connection", None)
+    if connection is not None:
+        return connection
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH, timeout=10)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA journal_mode=WAL")
     connection.execute("PRAGMA busy_timeout=10000")
+    _local.connection = connection
     return connection
 
 
@@ -92,9 +107,19 @@ def page(offset: int, limit: int) -> list[dict]:
 
 
 def total() -> int:
+    """Row count, counted once.
+
+    Every paginated call needs this, and COUNT(*) over the catalog was the
+    single most expensive part of serving a page. The store has no insert or
+    delete operation -- the catalog is fixed once initialise() has seeded it
+    -- so counting on each call could only ever return the same number.
+    """
+    global _total
     initialise()
-    with connect() as connection:
-        return connection.execute("SELECT COUNT(*) FROM books").fetchone()[0]
+    if _total is None:
+        with connect() as connection:
+            _total = connection.execute("SELECT COUNT(*) FROM books").fetchone()[0]
+    return _total
 
 
 def get_book(book_id: int) -> dict | None:

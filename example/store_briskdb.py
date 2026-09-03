@@ -46,6 +46,7 @@ ROUTING_KEY = "books"
 _lock = threading.Lock()
 _db = None
 _session = None
+_total = None
 
 
 def describe() -> str:
@@ -120,8 +121,12 @@ def page(offset: int, limit: int) -> list[dict]:
 
 
 def total() -> int:
+    """Row count, counted once -- see the note in store_sqlite.total()."""
+    global _total
     initialise()
-    return session().query("SELECT COUNT(*) FROM books")["rows"][0][0]
+    if _total is None:
+        _total = session().query("SELECT COUNT(*) FROM books")["rows"][0][0]
+    return _total
 
 
 def get_book(book_id: int) -> dict | None:
