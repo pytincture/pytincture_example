@@ -5,10 +5,13 @@ asserts the things that have actually broken before:
 
   * widgets are built exactly once (a duplicate load_ui() call doubled them)
   * the grid is populated from the authenticated BFF
+  * clicking a row highlights exactly one row
+  * saving keeps the publication date intact
   * the ratings chart draws on its tab
   * form controls actually render
   * light/dark follows the OS, toggles, and is remembered
   * the Reports sidebar item opens the modal and fills it
+  * a successful save closes the modal
   * no console errors, no failed requests
 
 Setup (once):
@@ -113,6 +116,13 @@ def main() -> int:
         page.locator(".dhx_grid .dhx_grid-row").first.wait_for(timeout=30_000)
         check_at_least("grid rows", page.locator(".dhx_grid .dhx_grid-row").count(), 10)
 
+        print("\nrow selection highlight")
+        # dhx renders selection as an overlay element, not a class on the row.
+        check("nothing selected before clicking", page.locator(".dhx_grid-selected-row").count(), 0)
+        page.locator(".dhx_grid .dhx_grid-row").nth(2).click()
+        page.wait_for_timeout(500)
+        check("one row highlighted after click", page.locator(".dhx_grid-selected-row").count(), 1)
+
         print("\nper-column header filters")
         filters = page.locator(".dhx_grid-header input")
         check("filter inputs", filters.count(), 10)
@@ -203,6 +213,9 @@ def main() -> int:
         print("\nediting and saving persists across a reload")
         import time as _time
         new_title = f"SMOKE {int(_time.time())}"
+        saved_date = page.locator(
+            ".dhx_grid .dhx_grid-row").nth(5).locator(
+            ".dhx_grid-cell").nth(3).inner_text().strip()
         page.locator(".dhx_window input").first.fill(new_title)
         page.get_by_role("button", name="Save").click()
         page.wait_for_timeout(2500)
@@ -211,7 +224,16 @@ def main() -> int:
         edited_cell = lambda: page.locator(
             ".dhx_grid .dhx_grid-row").nth(5).locator(
             ".dhx_grid-cell").first.inner_text().strip()
+        # Closing is the only save confirmation, so it is part of the contract:
+        # the window stays put on a rejected write.
+        check("modal closes after a successful save", page.locator(".dhx_window").count(), 0)
         check("grid row updated after save", edited_cell(), new_title)
+        # DatepickerConfig defaults to dateFormat="%d/%m/%y" and used to misread
+        # the M/D/YYYY seed dates, writing the misreading back on every save.
+        date_cell = lambda: page.locator(
+            ".dhx_grid .dhx_grid-row").nth(5).locator(
+            ".dhx_grid-cell").nth(3).inner_text().strip()
+        check("publication date survives the save", date_cell(), saved_date)
 
         page.reload(wait_until="domcontentloaded")
         page.get_by_text("Book Details and Ratings").wait_for(timeout=BOOT_TIMEOUT_MS)
