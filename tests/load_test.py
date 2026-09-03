@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
+import re
 import signal
 import subprocess
 import sys
@@ -23,7 +25,30 @@ EXAMPLE = ROOT / "example"
 DEFAULT_BASE_URL = "http://127.0.0.1:8070"
 EMAIL = "demo@example.com"
 PASSWORD = "demo-password"
-PAGINATED_BFF_PATH = "/classcall/py_ui_data.py/py_ui_data/dataset_page"
+# Pytincture 1.0.0rc5 namespaces classcall routes under the application:
+# /{application}/classcall/{module}/{class}/{method}. The unprefixed path
+# rc1 served is gone, and an unmatched route 404s before authentication
+# runs -- which is why a stale path reads as "404, not 401" below.
+APPLICATION = "py_ui"
+PAGINATED_BFF_PATH = (
+    f"/{APPLICATION}/classcall/py_ui_data.py/py_ui_data/dataset_page"
+)
+LOGIN_CSRF_FIELD = re.compile(
+    r'name="login_csrf_token"\s+value="([^"]+)"'
+)
+# rc5 renamed the CSRF cookie and varies it by deployment: the __Host- form
+# under HTTPS, the dev form when session_https_only is False. rc1's
+# "pytincture_csrf" no longer exists. Accept whichever this deployment issued.
+CSRF_COOKIE_NAMES = ("__Host-pytincture-csrf", "pytincture-dev-csrf")
+# See service_environment(). Fixed widenings; the concurrency-shaped limits
+# are scaled to the profile in that function.
+LOAD_PROFILE_LIMITS = {
+    "AUTH_LOGIN_RATE_LIMIT_WINDOW_SECONDS": "60",
+    "AUTH_PASSWORD_HASH_MAX_CONCURRENCY": "8",
+    "AUTH_PASSWORD_HASH_QUEUE_TIMEOUT_SECONDS": "60",
+    "BFF_QUEUE_TIMEOUT_SECONDS": "30",
+    "BFF_REQUEST_INGRESS_QUEUE_TIMEOUT_SECONDS": "30",
+}
 MAX_PAGE_SIZE = 100
 CATALOG_SIZE = 10_000
 
@@ -59,6 +84,14 @@ def wait_for_service(base_url: str, timeout: float = 30.0) -> dict:
     raise RuntimeError("Pytincture example did not become healthy")
 
 
+def csrf_token(client: httpx.AsyncClient) -> str | None:
+    """The CSRF token this deployment issued, under whichever cookie name."""
+    return next(
+        (value for name in CSRF_COOKIE_NAMES if (value := client.cookies.get(name))),
+        None,
+    )
+
+
 async def prepare_client(base_url: str) -> tuple[httpx.AsyncClient, float, float]:
     client = httpx.AsyncClient(
         base_url=base_url,
@@ -67,18 +100,34 @@ async def prepare_client(base_url: str) -> tuple[httpx.AsyncClient, float, float
     )
     try:
         login_started = time.perf_counter()
+        # rc5 binds each login post to a single-use token the login page issues
+        # into the session, so the form must be fetched before it is submitted.
+        # An unauthenticated GET of the application 307s here; request the login
+        # page directly rather than following redirects on a no-redirect client.
+        form = await client.get(f"/{APPLICATION}/login")
+        form.raise_for_status()
+        match = LOGIN_CSRF_FIELD.search(form.text)
+        if match is None:
+            raise RuntimeError("login page did not carry a login_csrf_token field")
         login = await client.post(
-            "/py_ui/auth/user",
-            data={"email": EMAIL, "password": PASSWORD},
+            f"/{APPLICATION}/auth/user",
+            data={
+                "email": EMAIL,
+                "password": PASSWORD,
+                "login_csrf_token": match.group(1),
+            },
         )
         login_ms = (time.perf_counter() - login_started) * 1000
-        if login.status_code != 303 or login.headers.get("location") != "/py_ui":
+        if (
+            login.status_code != 303
+            or login.headers.get("location") != f"/{APPLICATION}"
+        ):
             raise RuntimeError(
                 f"login returned HTTP {login.status_code}: {login.text[:200]}"
             )
 
         app_started = time.perf_counter()
-        app = await client.get("/py_ui")
+        app = await client.get(f"/{APPLICATION}")
         app_ms = (time.perf_counter() - app_started) * 1000
         app.raise_for_status()
         if "pytincture.js" not in app.text:
@@ -86,9 +135,12 @@ async def prepare_client(base_url: str) -> tuple[httpx.AsyncClient, float, float
                 "authenticated Pytincture application HTML was not returned"
             )
 
-        csrf = client.cookies.get("pytincture_csrf")
+        csrf = csrf_token(client)
         if not csrf:
-            raise RuntimeError("login did not issue the CSRF cookie")
+            raise RuntimeError(
+                "login did not issue a CSRF cookie under any of "
+                f"{CSRF_COOKIE_NAMES}; jar held {sorted(client.cookies.keys())}"
+            )
         client.headers["X-CSRF-Token"] = csrf
         return client, login_ms, app_ms
     except Exception:
@@ -114,7 +166,7 @@ async def run_worker(
         try:
             response = await client.post(
                 PAGINATED_BFF_PATH,
-                json={"kwargs": {"page": page, "page_size": records_per_page}},
+                json={"args": [], "kwargs": {"page": page, "page_size": records_per_page}},
             )
             response.raise_for_status()
             payload = response.json()
@@ -157,7 +209,7 @@ async def prepare_clients(
             follow_redirects=False,
             timeout=httpx.Timeout(30),
             cookies=client.cookies,
-            headers={"X-CSRF-Token": client.cookies.get("pytincture_csrf")},
+            headers={"X-CSRF-Token": csrf_token(client)},
         )
         for client in prepared_clients
     ]
@@ -223,7 +275,7 @@ async def exercise(
     async with httpx.AsyncClient(base_url=base_url, timeout=10) as anonymous:
         rejected = await anonymous.post(
             PAGINATED_BFF_PATH,
-            json={"kwargs": {"page": 1, "page_size": records_per_page}},
+            json={"args": [], "kwargs": {"page": 1, "page_size": records_per_page}},
         )
     if rejected.status_code != 401:
         raise RuntimeError(
@@ -238,7 +290,7 @@ async def exercise(
     try:
         cap_response = await clients[0].post(
             PAGINATED_BFF_PATH,
-            json={"kwargs": {"page": 1, "page_size": MAX_PAGE_SIZE + 1}},
+            json={"args": [], "kwargs": {"page": 1, "page_size": MAX_PAGE_SIZE + 1}},
         )
         cap_response.raise_for_status()
         cap_payload = cap_response.json()
@@ -287,6 +339,52 @@ def parse_stages(value: str) -> list[int]:
     return stages
 
 
+def service_environment(peak_sessions: int) -> dict[str, str]:
+    """Environment for the service under test.
+
+    Four rc5 defaults collide with the shape of this profile:
+
+      * logins are throttled to AUTH_LOGIN_RATE_LIMIT_ATTEMPTS per window
+        (20/60s), and the profile signs in one session per simulated user;
+      * argon2 verification admits AUTH_PASSWORD_HASH_MAX_CONCURRENCY at a
+        time (2), with a one-second queue timeout;
+      * BFF request-body ingress is capped per peer at
+        BFF_REQUEST_INGRESS_MAX_CONCURRENCY_PER_PEER (16), and every session
+        here comes from one host;
+      * BFF execution queues past BFF_MAX_CONCURRENCY (32) but only BFF_MAX_QUEUE
+        deep (64), and rejects beyond that.
+
+    Widen these for the benchmark, scaled to the peak session count, and record
+    the values in the results so the evidence states plainly which limits the
+    numbers were measured under. These are real protections and a real
+    deployment sees many peers: never carry them into one.
+
+    Note what is *not* widened: BFF_MAX_CONCURRENCY. Its queue is deepened so
+    nothing is rejected, but the number of calls executing at once stays at
+    Pytincture's default. Raising it would put hundreds of threads on a
+    two-core CI runner, and the profile would measure thread thrash instead of
+    the server.
+    """
+    headroom = max(peak_sessions * 2, 100)
+    environment = dict(os.environ)
+    environment.update(LOAD_PROFILE_LIMITS)
+    environment.update(
+        {
+            "AUTH_LOGIN_RATE_LIMIT_ATTEMPTS": str(headroom),
+            # Admission *queues* are widened; admission *concurrency* is left
+            # at Pytincture's default. Queueing costs latency, which the
+            # profile measures; raising concurrency instead would put hundreds
+            # of threads on a two-core runner and measure thread thrash rather
+            # than the server.
+            "BFF_MAX_QUEUE": str(headroom * 4),
+            "BFF_REQUEST_INGRESS_MAX_CONCURRENCY": str(headroom),
+            "BFF_REQUEST_INGRESS_MAX_CONCURRENCY_PER_PEER": str(headroom),
+            "BFF_REQUEST_INGRESS_MAX_QUEUE": str(headroom * 4),
+        }
+    )
+    return environment
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
@@ -312,6 +410,7 @@ def main() -> None:
 
     service = None
     service_log = None
+    service_env = service_environment(max(args.stages))
     if not args.external_service:
         service_log = tempfile.TemporaryFile(mode="w+t")
         service = subprocess.Popen(
@@ -320,6 +419,7 @@ def main() -> None:
             stdout=service_log,
             stderr=subprocess.STDOUT,
             text=True,
+            env=service_env,
         )
 
     try:
@@ -362,6 +462,24 @@ def main() -> None:
                 "authentication_concurrency": args.authentication_concurrency,
                 "p95_budget_ms": args.p95_budget_ms,
                 "minimum_requests_per_second": args.minimum_rps,
+                # Relaxed for the benchmark only; see service_environment().
+                "relaxed_limits": (
+                    {}
+                    if args.external_service
+                    else {
+                        key: service_env[key]
+                        for key in sorted(
+                            set(LOAD_PROFILE_LIMITS)
+                            | {
+                                "AUTH_LOGIN_RATE_LIMIT_ATTEMPTS",
+                                "BFF_MAX_QUEUE",
+                                "BFF_REQUEST_INGRESS_MAX_CONCURRENCY",
+                                "BFF_REQUEST_INGRESS_MAX_CONCURRENCY_PER_PEER",
+                                "BFF_REQUEST_INGRESS_MAX_QUEUE",
+                            }
+                        )
+                    }
+                ),
             },
             **results,
             "status": "failed" if failures else "passed",

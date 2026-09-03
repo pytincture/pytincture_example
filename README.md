@@ -33,6 +33,34 @@ demo outside a disposable local environment. The launcher disables secure-only
 cookies for its plain-HTTP localhost workflow; production deployments must use
 HTTPS with `AUTH_SESSION_HTTPS_ONLY=true`.
 
+## Data store
+
+The example stores books in SQLite by default. Nothing extra to install; the
+database is created and seeded from `dataset.json` on first start.
+
+BriskDB is available as a drop-in alternative, exercising the same BFF code
+through a sharded-SQLite engine:
+
+```bash
+.venv/bin/pip install '.[briskdb]'
+PYTINCTURE_EXAMPLE_STORE=briskdb ../.venv/bin/python run.py
+```
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `PYTINCTURE_EXAMPLE_STORE` | `sqlite` | `sqlite` or `briskdb` |
+| `PYTINCTURE_EXAMPLE_DB` | `/tmp/pytincture-example/books.db` | SQLite file |
+| `PYTINCTURE_EXAMPLE_BRISKDB_DIR` | `/tmp/pytincture-example/briskdb` | BriskDB data directory |
+| `PYTINCTURE_EXAMPLE_BRISKDB_SHARDS` | `4` | BriskDB shard count |
+
+Both live outside the application directory, which Pytincture packages and
+ships to the browser.
+
+BriskDB is alpha software, which is why SQLite remains the default. Two of its
+constraints are handled in `store_briskdb.py` and are worth knowing if you adapt
+this code: sessions must be shared rather than opened per call, and schema
+migration requires sole-process ownership (so `run.py` seeds at startup).
+
 ## Load test
 
 The CI load profile creates 250 independent authenticated sessions, then runs

@@ -2,30 +2,45 @@
 Example application using MainWindow subclass and layout management
 with a collapsible sidebar, content area, a Tabbar containing a grid, calendar, and form.
 """
+import asyncio
+import json
+
+import js
+
+import widget  # declares __widgetset__/__version__ for the backend
 from dhxpyt.layout import MainWindow
-from dhxpyt.toolbar import ButtonConfig, ToolbarConfig, SeparatorConfig  # Direct imports
-from dhxpyt.sidebar import NavItemConfig, SeparatorConfig, SpacerConfig, SidebarConfig  # Direct imports
+from dhxpyt.toolbar import ButtonConfig, ToolbarConfig, SeparatorConfig as ToolbarSeparatorConfig
+from dhxpyt.sidebar import NavItemConfig, SeparatorConfig as SidebarSeparatorConfig, SpacerConfig, SidebarConfig
 from dhxpyt.grid import GridConfig, GridColumnConfig  # Grid and GridColumnConfig
 from dhxpyt.calendar import CalendarConfig
 from dhxpyt.form import FormConfig, InputConfig, DatepickerConfig  # Importing form-related classes
 from dhxpyt.layout import LayoutConfig, CellConfig  # Direct imports
 from dhxpyt.tabbar import TabbarConfig, TabConfig  # Tabbar-related imports
+from form_window import FormExample
 from py_ui_data import py_ui_data  # Assuming this is pulling the book data
 
 
+# Label beside the control rather than above it, with minimal padding.
+COMPACT_FIELD = {
+    "labelPosition": "left",
+    "labelWidth": "130px",
+    "padding": "2px",
+}
+
+
 class py_ui(MainWindow):
-    def __init__(self):
-        super().__init__()
+    # Implement load_ui() only. dhxpyt's LoadUICaller metaclass calls it once the
+    # instance is constructed; calling it from __init__ builds the UI twice.
+    def load_ui(self):
         self.set_theme("dark")
         self.sidebar_collapsed = False  # Track the sidebar state
-        self.load_ui()
+        self.form_window = None  # Created lazily by the Reports sidebar item
 
-    def load_ui(self):
         # Add a toolbar to the pre-existing 'mainwindow_header'
         toolbar_buttons = [
             ButtonConfig(id="file", value="File", icon="mdi mdi-car-brake-hold"),
             ButtonConfig(id="edit", value="Edit", icon="mdi mdi-pencil"),
-            SeparatorConfig(id="sep1"),
+            ToolbarSeparatorConfig(id="sep1"),
             ButtonConfig(id="help", value="Help", icon="mdi mdi-help-circle")
         ]
         toolbar_config = ToolbarConfig(data=toolbar_buttons)
@@ -49,7 +64,7 @@ class py_ui(MainWindow):
             NavItemConfig(id="dashboard", value="Dashboard", icon="mdi mdi-view-dashboard"),
             NavItemConfig(id="statistics", value="Statistics", icon="mdi mdi-chart-line"),
             NavItemConfig(id="reports", value="Reports", icon="mdi mdi-file-chart"),
-            SeparatorConfig(),  # Separator
+            SidebarSeparatorConfig(),  # Separator
             NavItemConfig(id="posts", value="Posts", icon="mdi mdi-square-edit-outline", items=[
                 NavItemConfig(id="addPost", value="New Post", icon="mdi mdi-plus"),
                 NavItemConfig(id="allPost", value="Posts", icon="mdi mdi-view-list"),
@@ -82,7 +97,7 @@ class py_ui(MainWindow):
         self.sidebar = self.mw_body_layout.add_sidebar(id="mainwindow_sidebar", sidebar_config=sidebar_config)
 
         # Add event to the hamburger button to toggle the sidebar
-        self.sidebar.on_click(self.handle_toolbar_click)
+        self.sidebar.on_click(self.handle_sidebar_click)
 
         # Now, create a new layout within the 'mainwindow_content' cell with two rows:
         # One for the HTML content and another for the tabbed content area.
@@ -114,59 +129,116 @@ class py_ui(MainWindow):
         # Add the tabbar to the content_tabbar row
         self.tabbar = self.content_layout.add_tabbar(id="content_tabbar", tabbar_config=tabbar_config)
 
-        # Grid columns configuration using GridColumnConfig
+        # Grid columns. The second header row is a per-column "inputFilter",
+        # which DHTMLX renders as a text box under the column title and applies
+        # as a substring match while you type.
         grid_columns = [
-            GridColumnConfig(width=300, id="title", header=[{"text": "TITle"}]),
-            GridColumnConfig(width=200, id="authors", header=[{"text": "Authors"}]),
-            GridColumnConfig(width=80, id="average_rating", header=[{"text": "Rating"}]),
-            GridColumnConfig(width=150, id="publication_date", header=[{"text": "Publication date"}]),
-            GridColumnConfig(width=150, id="isbn13", header=[{"text": "ISBN"}]),
-            GridColumnConfig(width=90, id="language_code", header=[{"text": "Language"}]),
-            GridColumnConfig(width=90, id="num_pages", header=[{"text": "Pages"}]),
-            GridColumnConfig(width=120, id="ratings_count", header=[{"text": "Rating count"}]),
-            GridColumnConfig(width=100, id="text_reviews_count", header=[{"text": "Text reviews count"}]),
-            GridColumnConfig(width=200, id="publisher", header=[{"text": "Publisher"}])
+            GridColumnConfig(
+                width=width,
+                id=field,
+                header=[{"text": label}, {"content": "inputFilter"}],
+            )
+            for field, label, width in (
+                ("title", "Title", 300),
+                ("authors", "Authors", 200),
+                ("average_rating", "Rating", 80),
+                ("publication_date", "Publication date", 150),
+                ("isbn13", "ISBN", 150),
+                ("language_code", "Language", 90),
+                ("num_pages", "Pages", 90),
+                ("ratings_count", "Rating count", 120),
+                ("text_reviews_count", "Text reviews count", 100),
+                ("publisher", "Publisher", 200),
+            )
         ]
 
-        # Fetching data from py_ui_data
-        data = py_ui_data().dataset()
-
-        # Grid configuration with columns
-        grid_config = GridConfig(
-            columns=grid_columns,
-            data=data
-        )
+        # Grid configuration with columns (data loaded asynchronously after init)
+        grid_config = GridConfig(columns=grid_columns)
 
         # Attach the grid to the first tab (tab1) using tabbar.add_grid
         self.book_grid = self.tabbar.add_grid(id="tab1", grid_config=grid_config)
+
+        # Double-clicking a row opens that book in the modal form.
+        self.book_grid.on_cell_dbl_click(self.handle_grid_dbl_click)
+
+        asyncio.ensure_future(self._load_grid_data())
 
         # Calendar configuration
         calendar_config = CalendarConfig(width="50%")
         self.cal = self.tabbar.add_calendar(id="tab4", calendar_config=calendar_config)
 
-        # Add a form for the book details in tab3
-        form_fields = [
-            InputConfig(id="title", label="Title"),
-            InputConfig(id="authors", label="Authors"),
-            InputConfig(id="average_rating", label="Rating"),
-            DatepickerConfig(id="publication_date", label="Publication Date"),
-            InputConfig(id="isbn13", label="ISBN"),
-            InputConfig(id="language_code", label="Language"),
-            InputConfig(id="num_pages", label="Pages"),
-            InputConfig(id="ratings_count", label="Rating Count"),
-            InputConfig(id="text_reviews_count", label="Text Reviews Count"),
-            InputConfig(id="publisher", label="Publisher")
+        # Add a form for the book details in tab3. Labels sit to the left of
+        # each control with tight padding, so the whole record fits without
+        # scrolling instead of one stacked label+input pair per row.
+        book_fields = [
+            ("title", "Title"),
+            ("authors", "Authors"),
+            ("average_rating", "Rating"),
+            ("isbn13", "ISBN"),
+            ("language_code", "Language"),
+            ("num_pages", "Pages"),
+            ("ratings_count", "Rating Count"),
+            ("text_reviews_count", "Text Reviews Count"),
+            ("publisher", "Publisher"),
         ]
+        form_fields = [
+            InputConfig(id=field, label=label, **COMPACT_FIELD)
+            for field, label in book_fields
+        ]
+        form_fields.insert(
+            3,
+            DatepickerConfig(
+                id="publication_date", label="Publication Date", **COMPACT_FIELD
+            ),
+        )
 
-        form_config = FormConfig(cols=form_fields)
+        # rows= renders the controls; cols= builds an empty form.
+        form_config = FormConfig(rows=form_fields)
 
         # Attach the form to the third tab (tab3) using tabbar.add_form
         self.book_form = self.tabbar.add_form(id="tab3", form_config=form_config)
 
-    def handle_toolbar_click(self, id, event):
-        """Handle toolbar button clicks."""
+    async def _load_grid_data(self):
+        # asyncio.ensure_future() swallows exceptions from this coroutine, so
+        # report them explicitly rather than failing silently.
+        try:
+            # The generated stub exposes both dataset() (blocking XHR) and
+            # dataset_async(); only the latter is awaitable.
+            raw = await py_ui_data().dataset_async()
+            data = json.loads(raw) if isinstance(raw, str) else raw
+            # dhxpyt's Grid wrapper has no data API; reach the underlying widget.
+            self.book_grid.grid.data.parse(js.JSON.parse(json.dumps(data)))
+        except Exception:
+            import traceback
+            js.console.error("grid load failed: " + traceback.format_exc())
+
+    def handle_sidebar_click(self, id, event):
+        """Handle sidebar item clicks."""
         if id == "hamburger":
             self.toggle_sidebar()
+        elif id == "reports":
+            self.show_report_form()
+
+    def handle_grid_dbl_click(self, row, column, event):
+        """Open the modal on the double-clicked book."""
+        self.show_report_form(record=row)
+
+    def show_report_form(self, record=None):
+        """Open the book-details modal, reusing the window across opens."""
+        if self.form_window is None:
+            # FormExample.load_ui() builds, attaches and shows the window.
+            self.form_window = FormExample(record=record)
+            self.form_window.on_saved = self.apply_saved_record
+            return
+        self.form_window.show()
+        if record is not None:
+            self.form_window.set_record(record)
+
+    def apply_saved_record(self, record):
+        """Reflect a saved book back into the grid row it came from."""
+        self.book_grid.grid.data.update(
+            record["id"], js.JSON.parse(json.dumps(record))
+        )
 
     def toggle_sidebar(self, event=None):
         """Toggle the sidebar collapse/expand state."""
