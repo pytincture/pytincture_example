@@ -5,7 +5,9 @@ asserts the things that have actually broken before:
 
   * widgets are built exactly once (a duplicate load_ui() call doubled them)
   * the grid is populated from the authenticated BFF
+  * the ratings chart draws on its tab
   * form controls actually render
+  * light/dark follows the OS, toggles, and is remembered
   * the Reports sidebar item opens the modal and fills it
   * no console errors, no failed requests
 
@@ -138,6 +140,23 @@ def main() -> int:
         check("rows restored after clearing", 
               page.locator(".dhx_grid .dhx_grid-row").count(), unfiltered)
 
+        print("\nBook Ratings Chart tab draws")
+        page.get_by_text("BOOK RATINGS CHART").click()
+        # The chart is built from the same dataset call as the grid, so by now
+        # it exists; the class comes from the chart's own `css` config.
+        chart = page.locator(".book-ratings-chart")
+        chart.first.wait_for(timeout=30_000)
+        check("chart count", chart.count(), 1)
+        check("chart visible", chart.first.is_visible(), True)
+        # dhx draws each bar as an SVG <path class="chart">; the only <rect>
+        # is the plot background. Ten bars means the data reached the chart.
+        check("chart bars", page.locator(".book-ratings-chart svg path.chart").count(), 10)
+        # The axis is fitted to the data rather than spanning the full 0-5,
+        # which is what keeps ten near-identical ratings visually distinct.
+        # SVG <text> has no innerText, so read textContent.
+        labels = page.locator(".book-ratings-chart svg text.scale-text").all_text_contents()
+        check("chart axis fitted to data", "4.8" in labels and "5" not in labels, True)
+
         print("\nForm View tab renders controls")
         page.get_by_text("FORM VIEW").click()
         page.wait_for_timeout(1500)
@@ -199,6 +218,29 @@ def main() -> int:
         page.locator(".dhx_grid .dhx_grid-row").first.wait_for(timeout=30_000)
         page.wait_for_timeout(1500)
         check("survives reload (persisted to the store)", edited_cell(), new_title)
+
+        print("\nlight / dark mode")
+        theme = lambda: page.evaluate(
+            "() => document.documentElement.getAttribute('data-dhx-theme')"
+        )
+        # Chromium defaults to prefers-color-scheme: light and nothing has been
+        # stored yet, so the app should have started from the OS preference.
+        check("starts from the OS preference", theme(), "light")
+        page.get_by_text("DARK").click()
+        page.wait_for_timeout(600)
+        check("toggle switches to dark", theme(), "dark")
+        check("toggle now offers Light", page.get_by_text("LIGHT").count(), 1)
+        check("choice remembered",
+              page.evaluate("() => localStorage.getItem('py_ui.theme')"), "dark")
+        # dhx themes are CSS-only, so widgets built earlier must survive it.
+        page.get_by_text("BOOK RATINGS CHART").click()
+        page.wait_for_timeout(1000)
+        check("chart survives the switch",
+              page.locator(".book-ratings-chart svg path.chart").count(), 10)
+        page.emulate_media(color_scheme="dark")
+        page.emulate_media(color_scheme="light")
+        page.wait_for_timeout(600)
+        check("an explicit choice pins the mode", theme(), "dark")
 
         if args.screenshot_dir:
             args.screenshot_dir.mkdir(parents=True, exist_ok=True)
