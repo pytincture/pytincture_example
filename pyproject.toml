@@ -14,7 +14,7 @@ authors = [
 dependencies = [
     # Pinned to the release candidate this example is qualified against; the
     # acceptance and smoke tests assert the installed version, not a literal.
-    "pytincture[password]==1.0.0rc5",
+    "pytincture[password]==1.0.0rc6",
     "dhxpyt==0.9.18",
 ]
 requires-python = ">=3.13"
