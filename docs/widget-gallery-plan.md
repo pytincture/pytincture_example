@@ -1,7 +1,7 @@
 # Feature plan: interactive widget gallery
 
-**Status:** proposed
-**Depends on:** [#62](https://github.com/pytincture/pytincture_example/pull/62) (store facade and editable UI)
+**Status:** proposed; Phase 0 groundwork partly landed (see *Groundwork already done*)
+**Depends on:** #62 (store facade and editable UI) -- **merged**
 
 ## Goal
 
@@ -115,7 +115,7 @@ instead of rendering a hardcoded fixture.
 | Widget | Workflow shown | Derived from |
 |---|---|---|
 | **grid** | Browse, filter per column, select, keyboard-navigate, right-click or Enter to edit, save | `dataset()` / `update_book()` *(exists)* |
-| **pagination** | Page the catalog server-side, 10k rows | `dataset_page()` *(exists)* |
+| ~~**pagination**~~ | **Not buildable** -- `Pagination` is absent from the bundled dhx Suite | -- |
 | **chart** | Ratings distribution; pages vs rating scatter | new `rating_histogram()` |
 | **tree** | Publisher → author → title drill-down | new `catalog_tree()` |
 | **kanban** | Move a book across To read / Reading / Read; the move persists | new `reading_status` column + `set_status()` |
@@ -223,6 +223,88 @@ Selector caution, learned from the chart tab: assert against a class the demo
 sets itself wherever possible, rather than guessing dhx internals. Read the
 rendered DOM before writing the assertion.
 
+
+## Groundwork already done
+
+Verified in a browser against the real app, not by reading code. All of it is
+in the widgetset unless noted.
+
+### The widgetset dev loop (this gates every widgetset change)
+
+dhxpyt reaches the browser as a **wheel**, and the example currently fetches it
+from `files.pythonhosted.org` at every cold boot -- so it needs internet to
+start, CI included. Pytincture will instead serve a root-level wheel from
+`modules_path` at `PYTINCTURE_DEV_WHEEL_VERSION` (default `99.99.99`) whenever
+no `WIDGET_TRUST_POLICY` is set, which is the local iteration path.
+
+**A rebuilt widgetset will not boot without an asset manifest.** Pytincture
+SHA-256-verifies every widgetset JS/CSS asset, resolving the manifest from
+runtime config, then an owned `dhxpyt/pytincture-assets.json` in the wheel,
+then a builtin compatibility lock. That lock covers **dhxpyt 0.9.18 only** and
+the wheel ships no manifest, so any other version fails at widgetset-load with:
+
+    RuntimeError: Widgetset dhxpyt==<v> must provide an owned, explicitly
+    hashed pytincture-assets.json manifest
+
+This blocks real releases, not just local dev. `scripts/generate_assets_manifest.py`
+now produces it (validated: it reproduces all 13 of Pytincture's own 0.9.18
+hashes), and `scripts/dev_wheel.sh` builds and installs a dev wheel in one step.
+
+Widgetset edits need a wheel rebuild **and** a service restart. Application
+code under `modules_path` does not -- a browser reload is enough.
+
+### Widgetset fixes
+
+- `add_colorpicker`, `add_combobox`, `add_slider` on `Layout` and `Tabbar`;
+  `SliderConfig` is now exported like every other widget's config.
+- `ContextMenu` wrapper (`dhxpyt/menu/contextmenu.py`). `Menu.show_at()` raises
+  a `TypeError` naming the replacement rather than failing inside dhx.
+- `Grid._bind()` retains every `create_proxy` handler and `Grid.destroy()`
+  releases them -- all 18 inline registrations were rewritten to use it.
+- `ColorpickerConfig.customColors` was typed `bool` but dhx treats it as an
+  array (`.includes`/`.indexOf`/`.splice`) defaulting to `[]`. A form
+  containing a Colorpicker with a preset value died with
+  `TypeError: colors.includes is not a function`. **Phase 5 would have hit
+  this immediately.** The standalone colorpicker config was already correct;
+  only the form control disagreed.
+- `Pagination` passes its `DataCollection` through by reference instead of
+  through `json.dumps` (which raised), and now reports the missing widget
+  clearly. The demo is still cancelled -- see Phase 1.
+
+### Bundled-widget audit
+
+22 of 24 wrapper constructors resolve to a widget in the bundled dhx Suite.
+The two that do not:
+
+- **`dhx.Pagination`** -- absent entirely; the wrapper and both `add_pagination`
+  helpers advertise a widget that cannot be built.
+- **`dhx.FormControl`** -- used only by the standalone control constructors in
+  `dhxpyt/form/controls/`. Controls built through `FormConfig` are unaffected,
+  so Phase 5 is fine.
+
+Re-run that audit before designing a demo around any widget not yet exercised.
+
+### In the example
+
+`py_ui.py` now carries the Phase 0 grid interaction and some Phase 3/5 controls:
+right-click on the book grid opens the modal via `ContextMenu`; the Form View
+tab uses `Slider` for rating, `Combo` for language (options loaded from the BFF)
+and `Colorpicker` for a shelf label, and mirrors the grid selection.
+
+**This couples the example to an unreleased widgetset**: `py_ui.py` imports
+`ContextMenu`, which released dhxpyt 0.9.18 does not have. Remove the dev wheel
+from `example/` and the app fails to import. Resolve by cutting a dhxpyt release
+(needs the manifest generator first), or by shipping the wheel with the example.
+
+### Testing note
+
+Three separate false failures this session came from guessing dhx class names:
+`.dhx_grid-cell` (the real one is `.dhx_grid-row`), `.dhx_colorpicker` (only in
+the DOM while the palette is open), and `text=` against a placeholder (an
+attribute, not text content). The existing "read the rendered DOM first"
+caution is right, and it scales badly across 24 demos -- the registry-driven
+loop should assert on `slug`/`css` values the demos set themselves.
+
 ## Phases
 
 Each phase is a PR. Phases 1–4 are independent of each other once Phase 0 lands,
@@ -230,8 +312,14 @@ so they can be worked in any order or in parallel.
 
 ### Phase 0 — groundwork *(blocking)*
 
-- Resolve the missing-`add_*` decision above.
+- ~~Resolve the missing-`add_*` decision~~ -- **done**, helpers added.
+- ~~`ContextMenu` and `Grid.destroy()`~~ -- **done**; see *Groundwork already done*.
 - Add `demos/base.py` (contract) and `demos/__init__.py` (registry).
+  **Keep `DemoSpec` metadata in a module that imports no dhxpyt widget code.**
+  Widget modules `import js` at module scope, so a registry that imports the
+  demo modules cannot be imported by `ui_smoke.py`, which runs in CPython
+  outside Pyodide. Split metadata from `build()`, or have the test read the
+  sidebar from the DOM.
 - Rewrite `py_ui.py` as a shell: chrome, sidebar built from the registry,
   content host, and demo swap with teardown.
 - Port the existing grid work to `demos/grid.py` as the reference demo — the one
@@ -246,12 +334,16 @@ registry of one.
 
 ### Phase 1 — data widgets
 
-chart, tree, listbox, cardflow, cardpanel, pagination. Adds `rating_histogram()`,
+chart, tree, listbox, cardflow, cardpanel. Adds `rating_histogram()`,
 `catalog_tree()`, `authors()` to the BFF.
 
-Highest-risk phase: `PaginationConfig(data=...)` wants a live DHTMLX
-`DataCollection`, not a Python list, so the pagination demo has to bind to
-another widget's collection. Prove that one first.
+Every new store function costs **twice**: see *The store facade* below.
+
+**The pagination demo is cancelled.** `Pagination` appears nowhere in the nine
+bundled dhx JS files or either typings file, so `js.dhx.Pagination` does not
+exist and the widget can never construct -- the `DataCollection` binding was
+never the real obstacle. Server-side paging over the 10k rows needs different
+chrome: a Toolbar pager or grid-driven paging against `dataset_page()`.
 
 ### Phase 2 — chrome widgets
 
@@ -275,6 +367,24 @@ Combo items go in `data`, not `options`.
 popup, message, chat. Adds the `notes` table and `add_note()`. `window` is
 already covered by the existing modal; it moves into `demos/window.py`.
 
+### The store facade — a cost every data phase pays
+
+`store.py` is a fixed list of re-exports over two hand-written backends. Only
+the *schema constants* in `store_schema.py` are shared; **queries are not**. So
+each of `rating_histogram()`, `catalog_tree()`, `authors()`, `distinct_values()`,
+`set_status()` and `add_note()` has to be written once for SQLite, once for
+BriskDB, and re-exported in `store.py` -- roughly six functions times two
+backends, spread across Phases 1, 3 and 4 and costed in none of them.
+
+Two related constraints:
+
+- `CREATE_BOOKS` is `CREATE TABLE IF NOT EXISTS`, so **adding `reading_status`,
+  `shelf_color` or `reminder` will not alter an existing database.** Phase 3
+  needs a migration step or a documented "delete your DB".
+- `store_briskdb.py` states that one table justifies its single routing key. A
+  `notes` table invalidates that premise in an alpha sharded engine; the chat
+  demo may be cheaper as SQLite-only with BriskDB degrading gracefully.
+
 ### Phase 5 — the form control catalogue
 
 One demo covering all 20 form controls, grouped in `Fieldset`s: a book record
@@ -283,6 +393,10 @@ everything — `Combo` for language, `Slider` for rating, `Toggle` for `in_store
 `Textarea` for notes, `RadioGroup` for status, `Avatar`/`SimpleVault` for a cover
 image. This is where the remaining 17 controls earn their place, and it is the
 page most people will actually copy from.
+
+`Colorpicker` in a form is already proven working (the `customColors` type bug
+is fixed). Expect more of the same class of defect: each control config is
+hand-written, and only the ones the example exercises have ever been run.
 
 ### Phase 6 — documentation
 
@@ -310,9 +424,9 @@ painful, split the loop into `--demos data,chrome,...` groups and fan out in CI.
 
 | Risk | Mitigation |
 |---|---|
-| `PaginationConfig` needs a live `DataCollection` | Prove the binding in Phase 1 before designing the rest of that demo |
-| Three widgets have no mounting helper | Phase 0 decision; widgetset change preferred over a workaround |
-| `create_proxy` handlers leak on navigation | `teardown()` in the contract; the build-once smoke check catches regressions |
+| `dhx.Pagination` does not exist in the bundled Suite | Demo cancelled; page from a Toolbar or the grid instead |
+| ~~Three widgets have no mounting helper~~ | **Fixed**: `add_colorpicker`/`add_combobox`/`add_slider` added to `Layout` and `Tabbar` |
+| `create_proxy` handlers leak on navigation | **Fixed**: `Grid` now tracks proxies and exposes `destroy()`, so `teardown()` is implementable; the build-once smoke check catches regressions |
 | `Menu.show_at()` is broken — `showAt` exists only on dhx's `ContextMenu`, which the widgetset does not wrap | Phase 0 decision: add a `ContextMenu` wrapper, or construct `js.dhx.ContextMenu` directly in the grid demo |
 | Grid keyboard events have no wrapper method | Bind `"keydown"` via `add_event_handler()`; release the proxy in `teardown()` |
 | Kanban/chat/cardpanel config shapes are unverified | Each has a nested config family (`KanbanCardConfig`, `ChatMessageConfig`, `CardPanelCardConfig`); read the generated reference page before writing the demo |

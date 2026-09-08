@@ -6,4 +6,4 @@ py_ui.py imports this module. Both values must be literals.
 """
 
 __widgetset__ = "dhxpyt"
-__version__ = "0.9.18"
+__version__ = "0.9.19"
