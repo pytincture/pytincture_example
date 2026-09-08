@@ -43,6 +43,19 @@ BOOT_TIMEOUT_MS = 180_000
 IGNORED_CONSOLE = ("preloaded using link preload",)
 
 
+def _is_expected_request_failure(request) -> bool:
+    """True for aborts the runtime makes on purpose.
+
+    Pytincture probes for a backend-served widgetset wheel with a HEAD it
+    aborts once the headers arrive, so Chromium reports net::ERR_ABORTED even
+    though the server answered 200. This only shows up when a wheel is served
+    from modules_path -- the PyPI path does no probe -- so it would fail the
+    suite for anyone developing against a locally built widgetset.
+    """
+    failure = (request.failure or "") if hasattr(request, "failure") else ""
+    return "ERR_ABORTED" in failure and ".whl" in request.url
+
+
 def wait_for_service(timeout: float = 30.0) -> dict:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -94,7 +107,11 @@ def main() -> int:
             else None,
         )
         page.on("pageerror", lambda e: console_errors.append(str(e)))
-        page.on("requestfailed", lambda r: failed_requests.append(r.url))
+        page.on(
+            "requestfailed",
+            lambda r: None if _is_expected_request_failure(r)
+            else failed_requests.append(r.url),
+        )
 
         print("\nlogin")
         page.goto(BASE_URL, wait_until="domcontentloaded")

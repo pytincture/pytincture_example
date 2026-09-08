@@ -1,4 +1,7 @@
 example/*.whl
+# ...except the pinned widgetset wheel, which is vendored so the example
+# installs and boots without reaching PyPI. Update this when the pin moves.
+!example/dhxpyt-0.9.19-py3-none-any.whl
 __pycache__/
 *.pyc
 *.egg-info/

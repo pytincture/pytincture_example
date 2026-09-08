@@ -21,7 +21,15 @@ from dhxpyt.sidebar import NavItemConfig, SeparatorConfig as SidebarSeparatorCon
 from dhxpyt.grid import GridConfig, GridColumnConfig  # Grid and GridColumnConfig
 from dhxpyt.calendar import CalendarConfig
 from dhxpyt.chart import BarChartConfig
-from dhxpyt.form import FormConfig, InputConfig, DatepickerConfig  # Importing form-related classes
+from dhxpyt.form import (
+    FormConfig,
+    InputConfig,
+    DatepickerConfig,
+    ComboConfig,
+    SliderConfig,
+    ColorpickerConfig,
+)
+from dhxpyt.menu import ContextMenu, MenuConfig, MenuItemConfig
 from dhxpyt.layout import LayoutConfig, CellConfig  # Direct imports
 from dhxpyt.tabbar import TabbarConfig, TabConfig  # Tabbar-related imports
 from form_window import FormExample
@@ -39,11 +47,18 @@ DATE_FORMAT = "%n/%j/%Y"
 
 
 # Label beside the control rather than above it, with minimal padding.
+# Controls default to filling the cell, which stretches a four-digit page
+# count across the whole tab; width caps them at a readable size instead.
+# The width covers label + control, so it includes labelWidth.
 COMPACT_FIELD = {
     "labelPosition": "left",
     "labelWidth": "130px",
     "padding": "2px",
+    "width": "460px",
 }
+
+# Short values -- counts and page numbers -- get a narrower box.
+NARROW_FIELD = {**COMPACT_FIELD, "width": "280px"}
 
 
 class py_ui(MainWindow):
@@ -193,6 +208,19 @@ class py_ui(MainWindow):
         # Double-clicking a row opens that book in the modal form.
         self.book_grid.on_cell_dbl_click(self.handle_grid_dbl_click)
 
+        # Selecting a row mirrors it into the Form View tab, so that tab shows
+        # a real record rather than an empty control catalogue.
+        self.book_grid.on_cell_click(self.handle_grid_click)
+
+        # Right-click offers the same action through a second affordance.
+        # dhx defines showAt only on ContextMenu, so this is not a plain Menu.
+        self.grid_menu = ContextMenu(config=MenuConfig(data=[
+            MenuItemConfig(id="edit", value="Edit", icon="mdi mdi-pencil"),
+        ]))
+        self.grid_menu.on_click(self.handle_grid_menu_click)
+        self.grid_menu_row = None
+        self.book_grid.on_cell_right_click(self.handle_grid_right_click)
+
         # Both tab1 and tab2 are filled from the one dataset call below.
         self.books = []
         self.book_chart = None
@@ -205,29 +233,67 @@ class py_ui(MainWindow):
         # Add a form for the book details in tab3. Labels sit to the left of
         # each control with tight padding, so the whole record fits without
         # scrolling instead of one stacked label+input pair per row.
+        # Plain text fields. Rating, language and the shelf label use controls
+        # suited to their values instead -- see below.
         book_fields = [
-            ("title", "Title"),
-            ("authors", "Authors"),
-            ("average_rating", "Rating"),
-            ("isbn13", "ISBN"),
-            ("language_code", "Language"),
-            ("num_pages", "Pages"),
-            ("ratings_count", "Rating Count"),
-            ("text_reviews_count", "Text Reviews Count"),
-            ("publisher", "Publisher"),
+            ("title", "Title", COMPACT_FIELD),
+            ("authors", "Authors", COMPACT_FIELD),
+            ("isbn13", "ISBN", COMPACT_FIELD),
+            ("num_pages", "Pages", NARROW_FIELD),
+            ("ratings_count", "Rating Count", NARROW_FIELD),
+            ("text_reviews_count", "Text Reviews Count", NARROW_FIELD),
+            ("publisher", "Publisher", COMPACT_FIELD),
         ]
         form_fields = [
-            InputConfig(id=field, label=label, **COMPACT_FIELD)
-            for field, label in book_fields
+            InputConfig(id=field, label=label, **sizing)
+            for field, label, sizing in book_fields
         ]
         form_fields.insert(
-            3,
+            2,
             DatepickerConfig(
                 id="publication_date",
                 label="Publication Date",
                 dateFormat=DATE_FORMAT,
+                **NARROW_FIELD,
+            ),
+        )
+        # A rating is a bounded number, so a slider reads better than a text
+        # box. Ratings carry two decimals, hence the 0.01 step.
+        form_fields.insert(
+            2,
+            SliderConfig(
+                id="average_rating",
+                label="Rating",
+                min=0,
+                max=5,
+                step=0.01,
+                value=0,
                 **COMPACT_FIELD,
             ),
+        )
+        # Language is a closed set drawn from the catalog. Combo options go in
+        # `data`, not `options`; they are filled once the dataset arrives.
+        form_fields.insert(
+            5,
+            ComboConfig(
+                id="language_code",
+                label="Language",
+                data=[],
+                # The label already says Language; a long placeholder just
+                # clips at this width.
+                placeholder="Select...",
+                **NARROW_FIELD,
+            ),
+        )
+        # Shelf label colour -- display only for now; persisting it needs a
+        # `shelf_color` column on `books`.
+        form_fields.append(
+            ColorpickerConfig(
+                id="shelf_color",
+                label="Shelf Label",
+                value="#4a90d9",
+                **NARROW_FIELD,
+            )
         )
 
         # rows= renders the controls; cols= builds an empty form.
@@ -248,9 +314,31 @@ class py_ui(MainWindow):
             # dhxpyt's Grid wrapper has no data API; reach the underlying widget.
             self.book_grid.grid.data.parse(js.JSON.parse(json.dumps(self.books)))
             self._build_chart()
+            self._fill_language_combo()
         except Exception:
             import traceback
             js.console.error("dataset load failed: " + traceback.format_exc())
+
+    def _fill_language_combo(self):
+        """Populate the Form tab's language Combo from the loaded catalog."""
+        codes = sorted({
+            book.get("language_code") for book in self.books
+            if book.get("language_code")
+        })
+        options = [{"id": code, "value": code} for code in codes]
+        # load_ui() builds the form after scheduling this coroutine; if it
+        # failed there is nothing to fill, and no reason to raise again here.
+        form = getattr(self, "book_form", None)
+        if form is None:
+            return
+        try:
+            # A Combo *control* wraps a Combobox widget; the options live on
+            # that widget's DataCollection, not on the control itself.
+            control = form.get_item("language_code")
+            control.getWidget().data.parse(js.JSON.parse(json.dumps(options)))
+        except Exception:
+            import traceback
+            js.console.error("language combo fill failed: " + traceback.format_exc())
 
     def _chart_rows(self):
         """The ten most-rated books, titles trimmed so the axis stays legible."""
@@ -352,9 +440,49 @@ class py_ui(MainWindow):
         elif id == "reports":
             self.show_report_form()
 
+    def handle_grid_click(self, row, column, event):
+        """Mirror the clicked row into the Form View tab."""
+        self.show_record_in_form(row)
+
+    def show_record_in_form(self, record):
+        """Fill the Form View tab from a book record.
+
+        setValue ignores keys with no matching control, so the record can be
+        passed through as-is; shelf_color has no column in `books` yet, so it
+        keeps whatever the colorpicker is already showing.
+        """
+        form = getattr(self, "book_form", None)
+        if form is None or not record:
+            return
+        try:
+            values = {k: v for k, v in dict(record).items() if k != "id"}
+            form.form.setValue(js.JSON.parse(json.dumps(values)))
+        except Exception:
+            import traceback
+            js.console.error("form fill failed: " + traceback.format_exc())
+
     def handle_grid_dbl_click(self, row, column, event):
         """Open the modal on the double-clicked book."""
         self.show_report_form(record=row)
+
+    def handle_grid_right_click(self, row, column, event):
+        """Show the grid context menu at the cursor.
+
+        dhx reads the position straight off the MouseEvent, so the event from
+        on_cell_right_click is passed through untouched.
+        """
+        self.grid_menu_row = row
+        try:
+            event.preventDefault()
+        except Exception:  # not every browser event exposes it
+            pass
+        self.grid_menu.show_at(event)
+        return False
+
+    def handle_grid_menu_click(self, id, event=None):
+        """Context-menu actions operate on the right-clicked row."""
+        if id == "edit" and self.grid_menu_row is not None:
+            self.show_report_form(record=self.grid_menu_row)
 
     def show_report_form(self, record=None):
         """Open the book-details modal, reusing the window across opens."""
@@ -380,6 +508,7 @@ class py_ui(MainWindow):
                 break
         if self.book_chart is not None:
             self._build_chart()
+        self.show_record_in_form(record)
 
     def toggle_sidebar(self, event=None):
         """Toggle the sidebar collapse/expand state."""
