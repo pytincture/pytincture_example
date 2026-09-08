@@ -7,10 +7,21 @@ real dhxpyt application and an authenticated backend-for-frontend call.
 
 ```bash
 python3.13 -m venv .venv
-.venv/bin/pip install .
+.venv/bin/pip install --find-links example .
 cd example
 ../.venv/bin/python run.py
 ```
+
+`--find-links example` resolves the pinned `dhxpyt` from the wheel vendored in
+`example/` rather than from PyPI. That same wheel is what the backend serves to
+the browser, so the example installs and boots with no PyPI round-trip for the
+widgetset -- previously it fetched dhxpyt from `files.pythonhosted.org` on every
+cold start, which meant it could not boot offline.
+
+Replacing the wheel means updating three things together: the file in
+`example/`, the `dhxpyt==` pin in `pyproject.toml`, and `__version__` in
+`example/widget.py`. The `.gitignore` un-ignores the pinned filename
+specifically, so stray development wheels are still kept out of git.
 
 Open <http://localhost:8070/> and sign in with the credentials displayed on
 the login page:
@@ -42,7 +53,7 @@ BriskDB is available as a drop-in alternative, exercising the same BFF code
 through a sharded-SQLite engine:
 
 ```bash
-.venv/bin/pip install '.[briskdb]'
+.venv/bin/pip install --find-links example '.[briskdb]'
 PYTINCTURE_EXAMPLE_STORE=briskdb ../.venv/bin/python run.py
 ```
 
@@ -74,7 +85,7 @@ as a JSON workflow artifact.
 Run the same profile locally:
 
 ```bash
-.venv/bin/pip install '.[load-test]'
+.venv/bin/pip install --find-links example '.[load-test]'
 .venv/bin/python tests/load_test.py --output load-results.json
 ```
 
