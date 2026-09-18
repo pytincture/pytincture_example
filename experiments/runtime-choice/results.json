@@ -1,0 +1,30 @@
+{
+  "login_preserves_runtime": true,
+  "pyodide": {
+    "rows": 69,
+    "filter": true,
+    "select": true,
+    "save_reload_restore": true,
+    "bad_csrf_status": 403,
+    "loaded_pyodide": true
+  },
+  "micropython": {
+    "rows": 69,
+    "filter": true,
+    "select": true,
+    "save_reload_restore": true,
+    "bad_csrf_status": 403,
+    "loaded_pyodide": false
+  },
+  "transcrypt": {
+    "rows": 69,
+    "filter": true,
+    "select": true,
+    "save_reload_restore": true,
+    "bad_csrf_status": 403,
+    "loaded_pyodide": false
+  },
+  "picker_switch": true,
+  "minified_bundle": true,
+  "original_full_example": true
+}
