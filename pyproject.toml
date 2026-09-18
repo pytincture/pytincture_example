@@ -14,7 +14,7 @@ authors = [
 dependencies = [
     # Pin the exact RC7 source until the candidate is published. Replace this
     # with pytincture[password]==1.0.0rc7 before merging the release update.
-    "pytincture[password] @ git+https://github.com/pytincture/pytincture.git@3647ee85454bdff6fb61759167e20fa5af9cd845",
+    "pytincture[password] @ git+https://github.com/pytincture/pytincture.git@1a9152dca40df64b7678bfa23d31ccd04c94346e",
     "dhxpyt==0.9.19",
 ]
 requires-python = ">=3.13"
