@@ -3,6 +3,8 @@ Example application using MainWindow subclass and layout management
 with a collapsible sidebar, content area, a Tabbar containing a grid, chart,
 calendar, and form.
 """
+APP_TITLE = "Book Library"
+
 import asyncio
 import json
 

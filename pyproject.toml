@@ -12,12 +12,10 @@ authors = [
     { name = "Your Name", email = "schapman1974@gmail.com" }
 ]
 dependencies = [
-    # Pinned to the release candidate this example is qualified against; the
-    # acceptance and smoke tests assert the installed version, not a literal.
-    "pytincture[password]==1.0.0rc5",
+    # Pin the exact RC7 source until the candidate is published. Replace this
+    # with pytincture[password]==1.0.0rc7 before merging the release update.
+    "pytincture[password] @ git+https://github.com/pytincture/pytincture.git@1a9152dca40df64b7678bfa23d31ccd04c94346e",
     "dhxpyt==0.9.19",
-    "pytincture[password]==1.0.0rc6",
-    "dhxpyt==0.9.18",
 ]
 requires-python = ">=3.13"
 
