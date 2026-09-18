@@ -97,6 +97,11 @@ app = create_app(
         modules_path=str(HERE),
         default_application="py_ui",
         enable_user_login=True,
+        api_docs_mode=os.getenv("PYTINCTURE_API_DOCS_MODE", "public"),
+        api_docs_scope=os.getenv("PYTINCTURE_API_DOCS_SCOPE", "all"),
+        enable_bff_api_tokens=os.getenv("ENABLE_BFF_API_TOKENS", "true").lower() == "true",
+        bff_api_client_registry=os.getenv("BFF_API_CLIENT_REGISTRY", ""),
+        require_public_bff_token=os.getenv("REQUIRE_PUBLIC_BFF_TOKEN", "false").lower() == "true",
         # ALLOWED_EMAILS, AUTH_PASSWORD_HASHES and LOGIN_HELP_TEXT are not typed
         # PytinctureConfig fields. create_app() gives the backend a module-local
         # environment facade built from this config and never reads the
