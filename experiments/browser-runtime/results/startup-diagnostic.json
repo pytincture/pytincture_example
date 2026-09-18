@@ -1,0 +1,359 @@
+{
+  "ready_ms": 8248,
+  "runtime_ready_ms": null,
+  "transfer_bytes": 32468837,
+  "decoded_bytes": 32461637,
+  "requests": 24,
+  "metrics": null,
+  "lifecycle": [
+    {
+      "type": "stage-start",
+      "stage": "preflight",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:12.484Z",
+      "resource": "http://127.0.0.1:8092/py_ui/frontend/pyodide/0.29.3/full/",
+      "at": 494.2000000476837
+    },
+    {
+      "type": "stage-complete",
+      "stage": "preflight",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:12.486Z",
+      "resource": "http://127.0.0.1:8092/py_ui/frontend/pyodide/0.29.3/full/",
+      "at": 494.60000002384186
+    },
+    {
+      "type": "stage-start",
+      "stage": "runtime-load",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:17.542Z",
+      "resource": "http://127.0.0.1:8092/py_ui/frontend/pyodide/0.29.3/full/pyodide.js",
+      "at": 5550.299999952316
+    },
+    {
+      "type": "stage-complete",
+      "stage": "runtime-load",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:18.531Z",
+      "resource": "http://127.0.0.1:8092/py_ui/frontend/pyodide/0.29.3/full/pyodide.js",
+      "at": 6539.200000047684
+    },
+    {
+      "type": "stage-start",
+      "stage": "package-install",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:18.531Z",
+      "resource": "micropip",
+      "at": 6539.200000047684
+    },
+    {
+      "type": "stage-complete",
+      "stage": "package-install",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:18.614Z",
+      "resource": "micropip",
+      "at": 6622.899999976158
+    },
+    {
+      "type": "stage-start",
+      "stage": "widgetset-install",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:18.614Z",
+      "resource": "dhxpyt==0.9.19",
+      "at": 6623
+    },
+    {
+      "type": "stage-complete",
+      "stage": "widgetset-install",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.325Z",
+      "resource": "dhxpyt==0.9.19",
+      "at": 7333.100000023842
+    },
+    {
+      "type": "stage-start",
+      "stage": "widgetset-load",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.325Z",
+      "resource": "http://127.0.0.1:8092/py_ui/appcode/dhxpyt-0.9.19-py3-none-any.whl",
+      "at": 7333.200000047684
+    },
+    {
+      "type": "stage-complete",
+      "stage": "widgetset-load",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.949Z",
+      "resource": "http://127.0.0.1:8092/py_ui/appcode/dhxpyt-0.9.19-py3-none-any.whl",
+      "at": 7957.700000047684
+    },
+    {
+      "type": "compatibility",
+      "stage": "widgetset-load",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.949Z",
+      "compatibility": {
+        "runtime": "pytincture",
+        "runtimeVersion": "1.0.0rc8",
+        "pyodideBaseUrl": "http://127.0.0.1:8092/py_ui/frontend/pyodide/0.29.3/full/",
+        "widgetset": "dhxpyt==0.9.19",
+        "pyodideVersion": "0.29.3",
+        "pythonVersion": "3.13.2",
+        "installedSource": "http://127.0.0.1:8092/py_ui/appcode/dhxpyt-0.9.19-py3-none-any.whl",
+        "widgetPackage": "dhxpyt",
+        "widgetVersion": "0.9.19",
+        "javascriptAssets": 9,
+        "cssAssets": 4,
+        "assetManifest": "dhxpyt/pytincture-assets.json",
+        "dhxAvailable": true
+      },
+      "at": 7957.799999952316
+    },
+    {
+      "type": "stage-start",
+      "stage": "archive-download",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.949Z",
+      "resource": "http://127.0.0.1:8092/py_ui/appcode/appcode.pyt",
+      "at": 7957.799999952316
+    },
+    {
+      "type": "stage-complete",
+      "stage": "archive-download",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.955Z",
+      "resource": "http://127.0.0.1:8092/py_ui/appcode/appcode.pyt",
+      "at": 7963.600000023842
+    },
+    {
+      "type": "stage-start",
+      "stage": "archive-unpack",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.955Z",
+      "resource": "http://127.0.0.1:8092/py_ui/appcode/appcode.pyt",
+      "at": 7963.600000023842
+    },
+    {
+      "type": "stage-complete",
+      "stage": "archive-unpack",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.956Z",
+      "resource": "http://127.0.0.1:8092/py_ui/appcode/appcode.pyt",
+      "at": 7964.799999952316
+    },
+    {
+      "type": "stage-start",
+      "stage": "entrypoint-execution",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:19.956Z",
+      "resource": "http://127.0.0.1:8092/py_ui:py_ui",
+      "at": 7964.799999952316
+    },
+    {
+      "type": "stage-complete",
+      "stage": "entrypoint-execution",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:20.193Z",
+      "resource": "http://127.0.0.1:8092/py_ui:py_ui",
+      "at": 8201.299999952316
+    },
+    {
+      "type": "ready",
+      "stage": "ready",
+      "requestId": "ab747e546bed4bdf9d89e3ad36a146de",
+      "timestamp": "2026-09-18T15:03:20.193Z",
+      "compatibility": {
+        "runtime": "pytincture",
+        "runtimeVersion": "1.0.0rc8",
+        "pyodideBaseUrl": "http://127.0.0.1:8092/py_ui/frontend/pyodide/0.29.3/full/",
+        "widgetset": "dhxpyt==0.9.19",
+        "pyodideVersion": "0.29.3",
+        "pythonVersion": "3.13.2",
+        "installedSource": "http://127.0.0.1:8092/py_ui/appcode/dhxpyt-0.9.19-py3-none-any.whl",
+        "widgetPackage": "dhxpyt",
+        "widgetVersion": "0.9.19",
+        "javascriptAssets": 9,
+        "cssAssets": 4,
+        "assetManifest": "dhxpyt/pytincture-assets.json",
+        "dhxAvailable": true
+      },
+      "at": 8201.299999952316
+    }
+  ],
+  "long_task_ms": 2089,
+  "resources": [
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/pyodide.js?uuid=ab747e546bed4bdf9d89e3ad36a146de",
+      "transfer": 18897,
+      "decoded": 18597,
+      "duration": 7,
+      "start": 464.5
+    },
+    {
+      "url": "/py_ui/frontend/pytincture.js?uuid=ab747e546bed4bdf9d89e3ad36a146de",
+      "transfer": 63663,
+      "decoded": 63363,
+      "duration": 7.5,
+      "start": 464.7000000476837
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/pyodide.asm.js?uuid=ab747e546bed4bdf9d89e3ad36a146de",
+      "transfer": 1074622,
+      "decoded": 1074322,
+      "duration": 12.699999928474426,
+      "start": 464.7000000476837
+    },
+    {
+      "url": "/py_ui/frontend/vendor/materialdesignicons/materialdesignicons.css?uuid=ab747e546bed4bdf9d89e3ad36a146de",
+      "transfer": 346641,
+      "decoded": 346341,
+      "duration": 5.5,
+      "start": 5539.200000047684
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/pyodide-lock.json",
+      "transfer": 120305,
+      "decoded": 120005,
+      "duration": 6.899999976158142,
+      "start": 5550.700000047684
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/python_stdlib.zip",
+      "transfer": 2424289,
+      "decoded": 2423989,
+      "duration": 31.5,
+      "start": 5550.899999976158
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/pyodide.asm.wasm",
+      "transfer": 8647984,
+      "decoded": 8647684,
+      "duration": 66.80000007152557,
+      "start": 5550.899999976158
+    },
+    {
+      "url": "/py_ui/frontend/pytincture.js?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 63663,
+      "decoded": 63363,
+      "duration": 3.200000047683716,
+      "start": 5579.299999952316
+    },
+    {
+      "url": "/py_ui/frontend/vendor/materialdesignicons/materialdesignicons.css?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 346641,
+      "decoded": 346341,
+      "duration": 5.199999928474426,
+      "start": 5597.100000023842
+    },
+    {
+      "url": "/py_ui/frontend/vendor/materialdesignicons/fonts/materialdesignicons-webfont.woff2?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 403516,
+      "decoded": 403216,
+      "duration": 7.699999928474426,
+      "start": 5603.700000047684
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/pyodide.js?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 18897,
+      "decoded": 18597,
+      "duration": 2.8000000715255737,
+      "start": 5612.899999976158
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/pyodide.asm.js?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 1074622,
+      "decoded": 1074322,
+      "duration": 6.399999976158142,
+      "start": 5616.5
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/micropip-0.11.0-py3-none-any.whl",
+      "transfer": 115709,
+      "decoded": 115409,
+      "duration": 8.5,
+      "start": 6543.399999976158
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/pyodide.asm.wasm?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 8647984,
+      "decoded": 8647684,
+      "duration": 149,
+      "start": 6549.5
+    },
+    {
+      "url": "/py_ui/appcode/dhxpyt-0.9.19-py3-none-any.whl?uuid=ab747e546bed4bdf9d89e3ad36a146de",
+      "transfer": 300,
+      "decoded": 0,
+      "duration": 201,
+      "start": 6623.200000047684
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/pyodide-lock.json?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 120305,
+      "decoded": 120005,
+      "duration": 10.400000095367432,
+      "start": 6713.799999952316
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/python_stdlib.zip?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 2424289,
+      "decoded": 2423989,
+      "duration": 34.699999928474426,
+      "start": 6725.100000023842
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/micropip-0.11.0-py3-none-any.whl?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 115709,
+      "decoded": 115409,
+      "duration": 6.299999952316284,
+      "start": 6764.200000047684
+    },
+    {
+      "url": "/py_ui/frontend/pyodide/0.29.3/full/micropip-0.11.0-py3-none-any.whl.metadata?uuid=ab747e546bed4bdf9d89e3ad36a146de&pytincture_warm=1",
+      "transfer": 21614,
+      "decoded": 21314,
+      "duration": 7.399999976158142,
+      "start": 6771.700000047684
+    },
+    {
+      "url": "/py_ui/appcode/dhxpyt-0.9.19-py3-none-any.whl?uuid=ab747e546bed4bdf9d89e3ad36a146de#sha256=91363f879134ff82f65acb55528f0523c9ea69ca838931a30fbb42abe87bf2ef",
+      "transfer": 5974771,
+      "decoded": 5974471,
+      "duration": 205.69999992847443,
+      "start": 7022.700000047684
+    },
+    {
+      "url": "/py_ui/appcode/appcode.pyt?uuid=ab747e546bed4bdf9d89e3ad36a146de",
+      "transfer": 12773,
+      "decoded": 12473,
+      "duration": 5,
+      "start": 7958
+    },
+    {
+      "url": "/py_ui/frontend/vendor/materialdesignicons/fonts/materialdesignicons-webfont.woff2?v=7.4.47",
+      "transfer": 403516,
+      "decoded": 403216,
+      "duration": 22.300000071525574,
+      "start": 8185.899999976158
+    },
+    {
+      "url": "/py_ui/classcall/py_ui_data.py/py_ui_data/dataset",
+      "transfer": 24886,
+      "decoded": 24586,
+      "duration": 13,
+      "start": 8200.799999952316
+    }
+  ],
+  "visible_rows": 21,
+  "service_worker": {
+    "page": "http://127.0.0.1:8092/py_ui",
+    "controller": null,
+    "registrations": [
+      {
+        "scope": "http://127.0.0.1:8092/py_ui/",
+        "active": "http://127.0.0.1:8092/py_ui/frontend/sw.js?uuid=ab747e546bed4bdf9d89e3ad36a146de&application=py_ui&release=1.0.0rc8",
+        "page_in_scope": false
+      }
+    ]
+  },
+  "warnings": []
+}

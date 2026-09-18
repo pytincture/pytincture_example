@@ -1,0 +1,62 @@
+local 1 full-no-sw cold 3482 18.34 MiB
+local 1 full-no-sw warm 2539 13.98 MiB
+local 2 full-no-sw cold 3060 18.34 MiB
+local 2 full-no-sw warm 2748 13.98 MiB
+local 3 full-no-sw cold 3019 18.34 MiB
+local 3 full-no-sw warm 2600 13.98 MiB
+local 4 full-no-sw cold 3225 18.34 MiB
+local 4 full-no-sw warm 2935 13.98 MiB
+local 5 full-no-sw cold 2972 18.34 MiB
+local 5 full-no-sw warm 2564 13.98 MiB
+throttled 1 full-no-sw cold 26866 17.96 MiB
+throttled 1 full-no-sw warm 22176 13.98 MiB
+throttled 2 full-no-sw cold 26799 17.96 MiB
+throttled 2 full-no-sw warm 22632 13.98 MiB
+throttled 3 full-no-sw cold 25932 17.96 MiB
+throttled 3 full-no-sw warm 21589 13.98 MiB
+[
+  {
+    "profile": "local",
+    "variant": "full-no-sw",
+    "cache": "cold",
+    "n": 5,
+    "median_ms": 3059.7,
+    "min_ms": 2971.7,
+    "max_ms": 3482.5,
+    "median_transfer_mib": 18.341,
+    "median_requests": 14
+  },
+  {
+    "profile": "local",
+    "variant": "full-no-sw",
+    "cache": "warm",
+    "n": 5,
+    "median_ms": 2599.9,
+    "min_ms": 2538.6,
+    "max_ms": 2934.8,
+    "median_transfer_mib": 13.985,
+    "median_requests": 14
+  },
+  {
+    "profile": "throttled",
+    "variant": "full-no-sw",
+    "cache": "cold",
+    "n": 3,
+    "median_ms": 26799.2,
+    "min_ms": 25932.2,
+    "max_ms": 26866.4,
+    "median_transfer_mib": 17.956,
+    "median_requests": 13
+  },
+  {
+    "profile": "throttled",
+    "variant": "full-no-sw",
+    "cache": "warm",
+    "n": 3,
+    "median_ms": 22175.7,
+    "min_ms": 21588.6,
+    "max_ms": 22632.4,
+    "median_transfer_mib": 13.985,
+    "median_requests": 14
+  }
+]

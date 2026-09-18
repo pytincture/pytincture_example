@@ -1,0 +1,9 @@
+.venv/
+.runner/
+node_modules/
+public/vendor/
+public/transcrypt/
+public/client.py
+public/bridge.py
+public/build.json
+__target__/

@@ -1,0 +1,242 @@
+local 1 full-example cold 8216 30.96 MiB
+local 1 full-example warm 7761 13.98 MiB
+local 1 pyodide cold 1146 13.69 MiB
+local 1 pyodide warm 1001 10.22 MiB
+local 1 micropython cold 134 2.51 MiB
+local 1 micropython warm 91 2.51 MiB
+local 1 transcrypt cold 135 2.04 MiB
+local 1 transcrypt warm 75 2.04 MiB
+local 2 pyodide cold 1153 13.69 MiB
+local 2 pyodide warm 878 10.22 MiB
+local 2 micropython cold 128 2.51 MiB
+local 2 micropython warm 74 2.51 MiB
+local 2 transcrypt cold 125 2.04 MiB
+local 2 transcrypt warm 76 2.04 MiB
+local 2 full-example cold 8054 30.96 MiB
+local 2 full-example warm 7544 13.98 MiB
+local 3 micropython cold 150 2.51 MiB
+local 3 micropython warm 74 2.51 MiB
+local 3 transcrypt cold 218 2.04 MiB
+local 3 transcrypt warm 74 2.04 MiB
+local 3 full-example cold 8142 30.96 MiB
+local 3 full-example warm 7962 13.98 MiB
+local 3 pyodide cold 1166 13.69 MiB
+local 3 pyodide warm 843 10.22 MiB
+local 4 transcrypt cold 136 2.04 MiB
+local 4 transcrypt warm 76 2.04 MiB
+local 4 full-example cold 8212 30.96 MiB
+local 4 full-example warm 7920 13.98 MiB
+local 4 pyodide cold 1156 13.69 MiB
+local 4 pyodide warm 935 10.22 MiB
+local 4 micropython cold 137 2.51 MiB
+local 4 micropython warm 76 2.51 MiB
+local 5 full-example cold 8277 30.96 MiB
+local 5 full-example warm 7814 13.98 MiB
+local 5 pyodide cold 1169 13.69 MiB
+local 5 pyodide warm 900 10.22 MiB
+local 5 micropython cold 174 2.51 MiB
+local 5 micropython warm 76 2.51 MiB
+local 5 transcrypt cold 143 2.04 MiB
+local 5 transcrypt warm 81 2.04 MiB
+throttled 1 full-example cold 38626 30.58 MiB
+throttled 1 full-example warm 27478 13.98 MiB
+throttled 1 pyodide cold 16488 13.66 MiB
+throttled 1 pyodide warm 12730 10.19 MiB
+throttled 1 micropython cold 2776 2.48 MiB
+throttled 1 micropython warm 2514 2.48 MiB
+throttled 1 transcrypt cold 2393 2.01 MiB
+throttled 1 transcrypt warm 2094 2.01 MiB
+throttled 2 pyodide cold 16420 13.66 MiB
+throttled 2 pyodide warm 12788 10.19 MiB
+throttled 2 micropython cold 2768 2.48 MiB
+throttled 2 micropython warm 2522 2.48 MiB
+throttled 2 transcrypt cold 2319 2.01 MiB
+throttled 2 transcrypt warm 2096 2.01 MiB
+throttled 2 full-example cold 38862 30.58 MiB
+throttled 2 full-example warm 26896 13.98 MiB
+throttled 3 micropython cold 2789 2.48 MiB
+throttled 3 micropython warm 2522 2.48 MiB
+throttled 3 transcrypt cold 2310 2.01 MiB
+throttled 3 transcrypt warm 2097 2.01 MiB
+throttled 3 full-example cold 38752 30.58 MiB
+throttled 3 full-example warm 26734 13.98 MiB
+throttled 3 pyodide cold 16652 13.66 MiB
+throttled 3 pyodide warm 12719 10.19 MiB
+[
+  {
+    "profile": "local",
+    "variant": "full-example",
+    "cache": "cold",
+    "n": 5,
+    "median_ms": 8211.9,
+    "min_ms": 8054.4,
+    "max_ms": 8277.1,
+    "median_transfer_mib": 30.965,
+    "median_requests": 24
+  },
+  {
+    "profile": "local",
+    "variant": "full-example",
+    "cache": "warm",
+    "n": 5,
+    "median_ms": 7813.6,
+    "min_ms": 7544.5,
+    "max_ms": 7961.8,
+    "median_transfer_mib": 13.985,
+    "median_requests": 14
+  },
+  {
+    "profile": "local",
+    "variant": "pyodide",
+    "cache": "cold",
+    "n": 5,
+    "median_ms": 1156.1,
+    "min_ms": 1145.6,
+    "max_ms": 1169.4,
+    "median_transfer_mib": 13.691,
+    "median_requests": 14
+  },
+  {
+    "profile": "local",
+    "variant": "pyodide",
+    "cache": "warm",
+    "n": 5,
+    "median_ms": 900.3,
+    "min_ms": 843.3,
+    "max_ms": 1000.8,
+    "median_transfer_mib": 10.221,
+    "median_requests": 14
+  },
+  {
+    "profile": "local",
+    "variant": "micropython",
+    "cache": "cold",
+    "n": 5,
+    "median_ms": 136.9,
+    "min_ms": 127.7,
+    "max_ms": 173.5,
+    "median_transfer_mib": 2.508,
+    "median_requests": 11
+  },
+  {
+    "profile": "local",
+    "variant": "micropython",
+    "cache": "warm",
+    "n": 5,
+    "median_ms": 75.6,
+    "min_ms": 74.3,
+    "max_ms": 91.1,
+    "median_transfer_mib": 2.508,
+    "median_requests": 11
+  },
+  {
+    "profile": "local",
+    "variant": "transcrypt",
+    "cache": "cold",
+    "n": 5,
+    "median_ms": 136.5,
+    "min_ms": 125.3,
+    "max_ms": 217.8,
+    "median_transfer_mib": 2.045,
+    "median_requests": 11
+  },
+  {
+    "profile": "local",
+    "variant": "transcrypt",
+    "cache": "warm",
+    "n": 5,
+    "median_ms": 75.6,
+    "min_ms": 74,
+    "max_ms": 80.6,
+    "median_transfer_mib": 2.045,
+    "median_requests": 11
+  },
+  {
+    "profile": "throttled",
+    "variant": "full-example",
+    "cache": "cold",
+    "n": 3,
+    "median_ms": 38752,
+    "min_ms": 38625.9,
+    "max_ms": 38862,
+    "median_transfer_mib": 30.58,
+    "median_requests": 23
+  },
+  {
+    "profile": "throttled",
+    "variant": "full-example",
+    "cache": "warm",
+    "n": 3,
+    "median_ms": 26896,
+    "min_ms": 26733.5,
+    "max_ms": 27477.8,
+    "median_transfer_mib": 13.985,
+    "median_requests": 14
+  },
+  {
+    "profile": "throttled",
+    "variant": "pyodide",
+    "cache": "cold",
+    "n": 3,
+    "median_ms": 16487.6,
+    "min_ms": 16420.5,
+    "max_ms": 16652,
+    "median_transfer_mib": 13.66,
+    "median_requests": 12
+  },
+  {
+    "profile": "throttled",
+    "variant": "pyodide",
+    "cache": "warm",
+    "n": 3,
+    "median_ms": 12730.5,
+    "min_ms": 12719.2,
+    "max_ms": 12787.8,
+    "median_transfer_mib": 10.19,
+    "median_requests": 12
+  },
+  {
+    "profile": "throttled",
+    "variant": "micropython",
+    "cache": "cold",
+    "n": 3,
+    "median_ms": 2775.7,
+    "min_ms": 2768,
+    "max_ms": 2788.9,
+    "median_transfer_mib": 2.477,
+    "median_requests": 9
+  },
+  {
+    "profile": "throttled",
+    "variant": "micropython",
+    "cache": "warm",
+    "n": 3,
+    "median_ms": 2521.7,
+    "min_ms": 2514.5,
+    "max_ms": 2522.3,
+    "median_transfer_mib": 2.477,
+    "median_requests": 9
+  },
+  {
+    "profile": "throttled",
+    "variant": "transcrypt",
+    "cache": "cold",
+    "n": 3,
+    "median_ms": 2319,
+    "min_ms": 2310.3,
+    "max_ms": 2392.7,
+    "median_transfer_mib": 2.014,
+    "median_requests": 9
+  },
+  {
+    "profile": "throttled",
+    "variant": "transcrypt",
+    "cache": "warm",
+    "n": 3,
+    "median_ms": 2095.5,
+    "min_ms": 2094.4,
+    "max_ms": 2097,
+    "median_transfer_mib": 2.014,
+    "median_requests": 9
+  }
+]

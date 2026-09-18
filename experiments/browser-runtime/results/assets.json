@@ -1,0 +1,294 @@
+{
+  "boot.js": {
+    "bytes": 3656,
+    "sha256": "89ad8fe1a560c61d0a7df3cf260c928e607833df36c3e850857d87884105b080"
+  },
+  "index.html": {
+    "bytes": 633,
+    "sha256": "bcbacb84d8b91276699ec31fb846b2e2a3843a61cda519bf5aa107a9c29c6153"
+  },
+  "client.py": {
+    "bytes": 1253,
+    "sha256": "b0d2b80839327580a5aa3af003c395b7890840918f51005d4c941143a2bad82f"
+  },
+  "bridge.py": {
+    "bytes": 640,
+    "sha256": "99e7166c11dc6324743207b9d305d83d143a5fd0ac033a97073928c9219b48e5"
+  },
+  "transcrypt/client.js": {
+    "bytes": 3207,
+    "sha256": "3848451094252df8029be16a75269fb14866269f001542f40e25320d3ecfa149"
+  },
+  "transcrypt/org.transcrypt.__runtime__.js": {
+    "bytes": 69025,
+    "sha256": "14cddc1682ef270482dc4b5a40be287565c9a641fae50552337cb19222b92b7b"
+  },
+  "transcrypt/copy.js": {
+    "bytes": 1030,
+    "sha256": "599d47c05b8109aba26148b28c6b7acdcecd0deda02952643da7a56901bceb42"
+  },
+  "transcrypt/bridge.js": {
+    "bytes": 2235,
+    "sha256": "9b731caa73e1f3af144ba6cb9a2931ecc1a57ce1a78b89cab4ccc2ada548d3ce"
+  },
+  "transcrypt/client.project": {
+    "bytes": 1996,
+    "sha256": "a5c07f2db5b4448f17d3651a7bae80e1fcf4554454f7e2e6cc72c1c6b53cf7c5"
+  },
+  "vendor/micropython/micropython.wasm": {
+    "bytes": 449553,
+    "sha256": "d5913c9327072e71d3e7a2e9384ea326f7d784bcc2f50a01b602c52bd2bdcafd"
+  },
+  "vendor/micropython/micropython.mjs": {
+    "bytes": 110120,
+    "sha256": "26cc7a99064a16518ab9a695e848efb248bfce504aee56ae73b2af35f3dcbf8b"
+  },
+  "vendor/dhxpyt/ragwidget.js": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "vendor/dhxpyt/dhx_custom.css": {
+    "bytes": 9064,
+    "sha256": "43091047578499088323dc062805c71327c273c2840512b7700f9ed10c9c6a61"
+  },
+  "vendor/dhxpyt/suite.css.map": {
+    "bytes": 37787,
+    "sha256": "b7bc073033187f2eaab1a11b140f2d5a7e205a95a15bf6a3af8f8d05759011a4"
+  },
+  "vendor/dhxpyt/kanban.css": {
+    "bytes": 208722,
+    "sha256": "155a5ea4b5589b1fa0c2b51ea7c9007e8939b1484d037f7ea04eaea9a03d1abb"
+  },
+  "vendor/dhxpyt/kanban.d.ts": {
+    "bytes": 29849,
+    "sha256": "58330dfb121a530480331677a8bbedc1c4d3763bc33077097e650a98664f8d16"
+  },
+  "vendor/dhxpyt/theme.js": {
+    "bytes": 1116,
+    "sha256": "1afd7bb65f81d3fc1e474edc81d3f6c23ffa2caa5feb2220153616137f117634"
+  },
+  "vendor/dhxpyt/suite.js": {
+    "bytes": 1837226,
+    "sha256": "e4d99a233660aae3afeb62d2aba546269bf5fe59ed4489481848ac0de53f9d2c"
+  },
+  "vendor/dhxpyt/suite.d.ts": {
+    "bytes": 72,
+    "sha256": "70d98b7dd96f036e5f6b79659204d14c2ee2ec339b52af8f55ec53758b00b134"
+  },
+  "vendor/dhxpyt/webgpu.js": {
+    "bytes": 2538,
+    "sha256": "f4825014ced0cb326995fa4ad9ecc6cccb6efa947ad8e6bf5b26a4e9c7759e89"
+  },
+  "vendor/dhxpyt/cardpanel.js": {
+    "bytes": 42329,
+    "sha256": "25e1befe91f86b1de5f738b934f6887c094b1c35d1a634a58c3cdb98c0e41715"
+  },
+  "vendor/dhxpyt/kanban.js": {
+    "bytes": 352582,
+    "sha256": "186950aa79b1a09525b78c808a6a62e4cfc052e1de6afe834eab64cbb94b9acb"
+  },
+  "vendor/dhxpyt/suite.css": {
+    "bytes": 167425,
+    "sha256": "bbfb8928fce1a99acf5a6f610c99625eea8b31e0f62b4cb5b31b6ccb684a1719"
+  },
+  "vendor/dhxpyt/suite.js.map": {
+    "bytes": 1402615,
+    "sha256": "f6e134a1f82b1b94f65914de2cb5daefb6bc4fd1fb3abb6644ed830b66a01b6d"
+  },
+  "vendor/dhxpyt/cardflow.js": {
+    "bytes": 39683,
+    "sha256": "a589ff5e7adb642b70c06b018f06789bff8da4c41520915830dd4c7aefc8658b"
+  },
+  "vendor/dhxpyt/chat.js": {
+    "bytes": 224399,
+    "sha256": "fa7420e2955db78d62317fa566209fefbf90eba042894bff6841754f32223c10"
+  },
+  "vendor/dhxpyt/license.txt": {
+    "bytes": 18092,
+    "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+  },
+  "vendor/dhxpyt/kanban_board.js": {
+    "bytes": 55902,
+    "sha256": "053a4d55b2c43171ce41b4888b0a89f123afbfe49ef5adbf540491b156626c55"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-Italic.woff2": {
+    "bytes": 116988,
+    "sha256": "dfd398d7372b61278e1505bfbdfc5ab0f6511ef887a47a2c90c13475eae585da"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-BlackItalic.woff2": {
+    "bytes": 116820,
+    "sha256": "9746bf2bd43fe158144b83ede747088e80396daad55b9e6ea7232e0e22ee6fce"
+  },
+  "vendor/dhxpyt/fonts/Inter-Medium.woff2": {
+    "bytes": 114348,
+    "sha256": "0ff3e94614e1493eb556314fd247ae6c4a85a7783b4cc86be539940cf83f2a48"
+  },
+  "vendor/dhxpyt/fonts/Inter-Black.woff2": {
+    "bytes": 111668,
+    "sha256": "12ed0eed6749099b46c7b2e8198dc30c2d7e0f2a4e5fb1d12f0b6ae2c4f33cc4"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-ExtraLightItalic.woff2": {
+    "bytes": 120124,
+    "sha256": "e8d7078160ef92b82c2123857c1b3aefaa4a795a44b56df5fe3edade60d81576"
+  },
+  "vendor/dhxpyt/fonts/Inter-Regular.woff2": {
+    "bytes": 111268,
+    "sha256": "e06f6b1bc553aaea4e4668023ed0ab0a147129c3107f511bc7d03d361b0ae085"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-ExtraBold.woff2": {
+    "bytes": 113636,
+    "sha256": "97eeee5a6f4f22fef1f607cf8836104d65968f03e59bc068a7586bf18364a8a7"
+  },
+  "vendor/dhxpyt/fonts/Inter-ExtraLight.woff2": {
+    "bytes": 112728,
+    "sha256": "ba4fc81dbb25871f1bcabc664b1e37703fca0a05f7248a923e7db497c6d211cc"
+  },
+  "vendor/dhxpyt/fonts/inter.css": {
+    "bytes": 10510,
+    "sha256": "868d674eb57814ea39415af15132b4077ccdc081b1c8e15cf31e652e12bf3cc9"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-ExtraLight.woff2": {
+    "bytes": 113108,
+    "sha256": "9031b6d2a1a559753d50b311ecb463ddf7acaaae1d992a7e9b009620d8ce6def"
+  },
+  "vendor/dhxpyt/fonts/Inter-ThinItalic.woff2": {
+    "bytes": 116880,
+    "sha256": "930d666b74e0dc0c26c2821f5643b701f8a41beaf3bb95ce146298104f29169c"
+  },
+  "vendor/dhxpyt/fonts/roboto-regular-webfont.woff2": {
+    "bytes": 15668,
+    "sha256": "536dcba259381282723b192e9272776701b2a6365c32c10e5f05e5560d2e2af1"
+  },
+  "vendor/dhxpyt/fonts/Inter-Light.woff2": {
+    "bytes": 112592,
+    "sha256": "e111a1e2ad914ccda9179b95e83fb10234dd52a1932e0b93c480476227983fd9"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-Bold.woff2": {
+    "bytes": 113556,
+    "sha256": "23bc37619593377e128f24660fedb2869d18277b4026cb46e5637be7643faf91"
+  },
+  "vendor/dhxpyt/fonts/Inter-Thin.woff2": {
+    "bytes": 109548,
+    "sha256": "70ca998635d9fc627dede8108f04d0989e6e03346183f0ad0917723e790f6973"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-ThinItalic.woff2": {
+    "bytes": 116040,
+    "sha256": "eff21589eacf1f6a596191038d7b47b4dd2455a096b175bb3572ecb6d026a611"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-Thin.woff2": {
+    "bytes": 108820,
+    "sha256": "21cfe42e7f1031b410e247ed199f43fc362415af81b3a8e442a97f63b4dbe327"
+  },
+  "vendor/dhxpyt/fonts/Inter-MediumItalic.woff2": {
+    "bytes": 120784,
+    "sha256": "1b0df503de488a92082a8c5d72ddc4c0229183ceb645ae1c25c2d0d63778517c"
+  },
+  "vendor/dhxpyt/fonts/Inter-ExtraBold.woff2": {
+    "bytes": 114856,
+    "sha256": "6f75025856f8db1b2186e9cb89be9de9894932c8b7b20f4df5e65916ff714e34"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-BoldItalic.woff2": {
+    "bytes": 120432,
+    "sha256": "5a0fe1f01b8777fab4a5f73c757743fa52579c7723b0291777625cb53c0a792a"
+  },
+  "vendor/dhxpyt/fonts/Inter-SemiBold.woff2": {
+    "bytes": 114812,
+    "sha256": "5cb7103e4e605989afebc03d989c79201e54b21b5183db33981f70db9178a301"
+  },
+  "vendor/dhxpyt/fonts/Inter-LightItalic.woff2": {
+    "bytes": 119608,
+    "sha256": "050265b27d11860a26c66c054210852661abb5d229c4e0bb3525757a830f3790"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-Regular.woff2": {
+    "bytes": 108948,
+    "sha256": "3a9463a58c3e7ba1e3cd65b5dbff91a35c508ff78a104cd1121feff83efeb787"
+  },
+  "vendor/dhxpyt/fonts/roboto-bold-webfont.woff2": {
+    "bytes": 15804,
+    "sha256": "b531a7c75a03138d3a3ee8441c338656dae03fe707f9982b0ce2c13756f96e66"
+  },
+  "vendor/dhxpyt/fonts/Inter-BoldItalic.woff2": {
+    "bytes": 121500,
+    "sha256": "4a10532d76c90c4597c0ad4bfc9284600e597d3012dd1ec16c1d44e0ad0058ab"
+  },
+  "vendor/dhxpyt/fonts/Inter-Bold.woff2": {
+    "bytes": 114840,
+    "sha256": "fa888127b6da015b65569f0351f3b5c391ad928904951f1c20e9f8462a8d95ea"
+  },
+  "vendor/dhxpyt/fonts/roboto-bold-webfont.woff": {
+    "bytes": 20780,
+    "sha256": "75dea0e4a6885e88c7e9776d72febdef078e57565ad135a598fb05d64b5b9cc2"
+  },
+  "vendor/dhxpyt/fonts/InterVariable.woff2": {
+    "bytes": 352240,
+    "sha256": "693b77d4f32ee9b8bfc995589b5fad5e99adf2832738661f5402f9978429a8e3"
+  },
+  "vendor/dhxpyt/fonts/roboto-regular-webfont.woff": {
+    "bytes": 20800,
+    "sha256": "8fc38564a1e61d2ec8b225b99ab3ae0dde881b6aefc74ba7bd51eb25cc4e6096"
+  },
+  "vendor/dhxpyt/fonts/Inter-ExtraBoldItalic.woff2": {
+    "bytes": 121516,
+    "sha256": "53bb20ba292e2ac28a0777bf0f56f31b98be432a3cc04359e2eb608c758349c7"
+  },
+  "vendor/dhxpyt/fonts/roboto-medium-webfont.woff2": {
+    "bytes": 15908,
+    "sha256": "2b4c3d8a9a39af15951c53fe977a36e5b214308548fdffdd1c65ea272271d3b4"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-Medium.woff2": {
+    "bytes": 113476,
+    "sha256": "f1227907684853882ad00d7f97ce9f64bc17b89a2a291a7d4ec84fccfa442934"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-Black.woff2": {
+    "bytes": 110308,
+    "sha256": "05650cb83c70fda2a465eade0c0a1a6c25d37ec49df3cd74b7e564683f9729f1"
+  },
+  "vendor/dhxpyt/fonts/Inter-Italic.woff2": {
+    "bytes": 117700,
+    "sha256": "2d078cb3bc8f934740d53b39dd23b0678f2f97477e49ec785dd9d8acd8b96bfc"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-LightItalic.woff2": {
+    "bytes": 119692,
+    "sha256": "59b5be56306fd353d067aa6995c2c92bc3feb3ace73684d94e3c6e73fe2beaac"
+  },
+  "vendor/dhxpyt/fonts/InterVariable-Italic.woff2": {
+    "bytes": 387976,
+    "sha256": "e564f652916db6c139570fefb9524a77c4d48f30c92928de9db19b6b5c7a262a"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-SemiBold.woff2": {
+    "bytes": 113772,
+    "sha256": "d9f63a82b826fb0117c92715c3a52a2d2247bc321bc39341420bf52d91e8277a"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-ExtraBoldItalic.woff2": {
+    "bytes": 120712,
+    "sha256": "159b72ba47887032915420aa1445ae6768197e7ea732230182998f14d1cdb932"
+  },
+  "vendor/dhxpyt/fonts/Inter-ExtraLightItalic.woff2": {
+    "bytes": 119320,
+    "sha256": "38bad3a6a9ad1a7fcd8082e6423ba5e0baea16598f2cf304e527844f697e32b2"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-SemiBoldItalic.woff2": {
+    "bytes": 120468,
+    "sha256": "dd9d78314bdd5062302a73c7e2954008bab8158304fa7ac4f0ea8977b841dccb"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-Light.woff2": {
+    "bytes": 112976,
+    "sha256": "01dd2d491ed863177e61f6e9458813baa85453ad97b32c5c1216927d4eebfe65"
+  },
+  "vendor/dhxpyt/fonts/InterDisplay-MediumItalic.woff2": {
+    "bytes": 120560,
+    "sha256": "6bf254c1a65c806c019f52818add66747da83595a314112917911bcf5fa2f5c5"
+  },
+  "vendor/dhxpyt/fonts/roboto-medium-webfont.woff": {
+    "bytes": 20972,
+    "sha256": "a9514e72f2b67718c421bb36ae0758c80730d85881a85c2959530cddedb6f504"
+  },
+  "vendor/dhxpyt/fonts/Inter-SemiBoldItalic.woff2": {
+    "bytes": 121416,
+    "sha256": "5e2a2bc3b5b9af0644f005693b10499dab18065d6aedbf46c8b74ccede27daeb"
+  },
+  "vendor/dhxpyt/fonts/Inter-BlackItalic.woff2": {
+    "bytes": 118420,
+    "sha256": "308e101141e9dee3b6b121614da03969eb8179886975a9eeb5348021b04368fe"
+  }
+}

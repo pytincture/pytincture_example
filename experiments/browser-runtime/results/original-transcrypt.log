@@ -1,0 +1,16 @@
+
+Transcrypt (TM) Python to JavaScript Small Sane Subset Transpiler Version 3.9.4
+Copyright (C) Geatec Engineering. License: Apache 2.0
+
+
+Saving target code in: /tmp/pytincture-transcrypt-original/copy.js
+Saving target code in: /tmp/pytincture-transcrypt-original/org.transcrypt.__runtime__.js
+
+Error while compiling (offending file last):
+	File 'py_ui', line 63, namely:
+
+	Error while compiling (offending file last):
+	File 'py_ui', line 63, namely:
+
+
+Aborted

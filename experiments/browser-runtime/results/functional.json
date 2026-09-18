@@ -1,0 +1,43 @@
+{
+  "pyodide": {
+    "rows": 69,
+    "filter_matches": 4,
+    "select": true,
+    "save_and_reload": true,
+    "restored": true,
+    "bad_csrf_status": 403,
+    "imports": {
+      "asyncio": "ok",
+      "dataclasses": "ok",
+      "typing": "ok",
+      "inspect": "ok",
+      "pyodide.ffi": "ok",
+      "js": "ok"
+    }
+  },
+  "micropython": {
+    "rows": 69,
+    "filter_matches": 4,
+    "select": true,
+    "save_and_reload": true,
+    "restored": true,
+    "bad_csrf_status": 403,
+    "imports": {
+      "asyncio": "ok",
+      "inspect": "ok",
+      "typing": "ImportError: no module named 'typing'",
+      "pyodide.ffi": "ImportError: no module named 'pyodide'",
+      "js": "ok",
+      "dataclasses": "ImportError: no module named 'dataclasses'"
+    }
+  },
+  "transcrypt": {
+    "rows": 69,
+    "filter_matches": 4,
+    "select": true,
+    "save_and_reload": true,
+    "restored": true,
+    "bad_csrf_status": 403
+  },
+  "anonymous_dataset_status": 401
+}
