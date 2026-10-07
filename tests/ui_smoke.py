@@ -5,10 +5,12 @@ asserts the things that have actually broken before:
 
   * widgets are built exactly once (a duplicate load_ui() call doubled them)
   * the grid is populated from the authenticated BFF
-  * clicking a row highlights exactly one row
-  * saving keeps the publication date intact
-  * the ratings chart draws on its tab
-  * form controls actually render
+  * only the active tab is shown
+  * clicking a row highlights exactly one row and mirrors it into Form View
+  * the grid filter narrows and restores the rows
+  * double-click and the right-click menu open the row in the modal
+  * saving keeps the publication date intact (M/D/YYYY in the store, ISO in
+    the native date picker)
   * light/dark follows the OS, toggles, and is remembered
   * the Reports sidebar item opens the modal and fills it
   * a successful save closes the modal
@@ -38,6 +40,18 @@ BASE_URL = "http://127.0.0.1:8070"
 EMAIL = "demo@example.com"
 PASSWORD = "demo-password"
 BOOT_TIMEOUT_MS = 180_000
+
+# The grid's body rows; the header row carries no data-row-id.
+ROWS = ".wapyt-datatable tbody tr[data-row-id]"
+SELECTED = ".wapyt-datatable tbody tr[data-selected='true']"
+# The Form View tab's form, as opposed to the one in the modal.
+FORM_VIEW = ".wapyt-tab-panel .wapyt-form"
+MODAL = ".wapyt-modal"
+
+
+def collapse(text: str) -> str:
+    return " ".join(text.split())
+
 
 # Console noise that is not the application's fault.
 IGNORED_CONSOLE = ("preloaded using link preload",)
@@ -113,6 +127,16 @@ def main() -> int:
             else failed_requests.append(r.url),
         )
 
+        def cell_text(row: int, column: int) -> str:
+            return page.locator(ROWS).nth(row).locator("td").nth(column).inner_text().strip()
+
+        def field_value(scope: str, field: str) -> str:
+            return page.locator(f'{scope} [data-field-id="{field}"] input').first.input_value()
+
+        def modal_visible() -> bool:
+            # A hidden modal stays in the DOM; only its overlay's display changes.
+            return page.locator(".wapyt-modal-overlay").first.is_visible()
+
         print("\nlogin")
         page.goto(BASE_URL, wait_until="domcontentloaded")
         page.get_by_placeholder("Email").fill(EMAIL)
@@ -121,161 +145,156 @@ def main() -> int:
 
         print("waiting for the app (Pyodide boot)")
         page.get_by_text("Book Details and Ratings").wait_for(timeout=BOOT_TIMEOUT_MS)
-        check("url after login", page.url, f"{BASE_URL}/py_ui")
+        # Since rc12 the app page lives at /py_ui/ (the bare path 307s there).
+        check("url after login", page.url, f"{BASE_URL}/py_ui/")
 
         print("\nwidgets built exactly once")
         # The heading attaches slightly before the widgets finish painting.
-        page.locator(".dhx_grid").first.wait_for(timeout=60_000)
-        for selector in (".dhx_grid", ".dhx_toolbar", ".dhx_sidebar", ".dhx_tabbar"):
+        page.locator(".wapyt-datatable").first.wait_for(timeout=60_000)
+        for selector in (".wapyt-datatable", ".wapyt-toolbar", ".wapyt-sidebar", ".wapyt-tabwidget"):
             check(f"{selector} count", page.locator(selector).count(), 1)
 
         print("\ngrid populated from the BFF")
-        page.locator(".dhx_grid .dhx_grid-row").first.wait_for(timeout=30_000)
-        check_at_least("grid rows", page.locator(".dhx_grid .dhx_grid-row").count(), 10)
+        page.locator(ROWS).first.wait_for(timeout=30_000)
+        check_at_least("grid rows", page.locator(ROWS).count(), 10)
+
+        print("\nonly the active tab is shown")
+        # Form and DataTable take over the display of the element they mount
+        # on; mounted straight onto a tab panel they un-hid the inactive tab.
+        check("form view hidden behind the grid", page.locator(FORM_VIEW).is_visible(), False)
 
         print("\nrow selection highlight")
-        # dhx renders selection as an overlay element, not a class on the row.
-        check("nothing selected before clicking", page.locator(".dhx_grid-selected-row").count(), 0)
-        page.locator(".dhx_grid .dhx_grid-row").nth(2).click()
+        check("nothing selected before clicking", page.locator(SELECTED).count(), 0)
+        page.locator(ROWS).nth(2).locator("td").first.click()
         page.wait_for_timeout(500)
-        check("one row highlighted after click", page.locator(".dhx_grid-selected-row").count(), 1)
+        check("one row highlighted after click", page.locator(SELECTED).count(), 1)
+        selected_title = cell_text(2, 0)
 
-        print("\nper-column header filters")
-        filters = page.locator(".dhx_grid-header input")
-        check("filter inputs", filters.count(), 10)
-        unfiltered = page.locator(".dhx_grid .dhx_grid-row").count()
-        filters.first.fill("potter")
-        page.wait_for_timeout(1500)
-        filtered = page.locator(".dhx_grid .dhx_grid-row").count()
+        print("\ngrid filter")
+        filters = page.locator(".wapyt-datatable-filter")
+        check("filter inputs", filters.count(), 1)
+        unfiltered = page.locator(ROWS).count()
+        filters.fill("potter")
+        page.wait_for_timeout(800)
+        filtered = page.locator(ROWS).count()
         ok = 0 < filtered < unfiltered
         print(f"  {'PASS' if ok else 'FAIL'}  'potter' narrows rows: {unfiltered} -> {filtered}")
         if not ok:
             failures.append(f"filter did not narrow rows: {unfiltered} -> {filtered}")
-        titles = [
-            t.strip()
-            for t in page.locator(
-                ".dhx_grid .dhx_grid-row .dhx_grid-cell:nth-child(1)"
-            ).all_inner_texts()
-            if t.strip()
-        ]
+        # The filter matches across every column; each of these books has
+        # "Potter" in its title.
+        titles = [cell_text(index, 0) for index in range(filtered)]
         ok = bool(titles) and all("potter" in t.lower() for t in titles)
         print(f"  {'PASS' if ok else 'FAIL'}  every visible title matches: {len(titles)} rows")
         if not ok:
             failures.append(f"non-matching rows survived the filter: {titles[:3]}")
-        filters.first.fill("")
-        page.wait_for_timeout(1200)
-        check("rows restored after clearing", 
-              page.locator(".dhx_grid .dhx_grid-row").count(), unfiltered)
+        filters.fill("")
+        page.wait_for_timeout(800)
+        check("rows restored after clearing", page.locator(ROWS).count(), unfiltered)
 
-        print("\nBook Ratings Chart tab draws")
-        page.get_by_text("BOOK RATINGS CHART").click()
-        # The chart is built from the same dataset call as the grid, so by now
-        # it exists; the class comes from the chart's own `css` config.
-        chart = page.locator(".book-ratings-chart")
-        chart.first.wait_for(timeout=30_000)
-        check("chart count", chart.count(), 1)
-        check("chart visible", chart.first.is_visible(), True)
-        # dhx draws each bar as an SVG <path class="chart">; the only <rect>
-        # is the plot background. Ten bars means the data reached the chart.
-        check("chart bars", page.locator(".book-ratings-chart svg path.chart").count(), 10)
-        # The axis is fitted to the data rather than spanning the full 0-5,
-        # which is what keeps ten near-identical ratings visually distinct.
-        # SVG <text> has no innerText, so read textContent.
-        labels = page.locator(".book-ratings-chart svg text.scale-text").all_text_contents()
-        check("chart axis fitted to data", "4.8" in labels and "5" not in labels, True)
-
-        print("\nForm View tab renders controls")
-        page.get_by_text("FORM VIEW").click()
-        page.wait_for_timeout(1500)
-        check_at_least("form inputs", page.locator(".dhx_form input").count(), 5)
+        print("\nForm View tab mirrors the selected row")
+        page.locator(".wapyt-tab", has_text="Form View").click()
+        page.wait_for_timeout(800)
+        check("form view visible", page.locator(FORM_VIEW).is_visible(), True)
+        check("grid hidden behind the form", page.locator(".wapyt-datatable").is_visible(), False)
+        check_at_least("form inputs", page.locator(f"{FORM_VIEW} input").count(), 5)
+        shown = field_value(FORM_VIEW, "title")
+        check("form shows the selected book", collapse(shown), collapse(selected_title))
+        # The store keeps M/D/YYYY; the native date picker needs ISO.
+        date = field_value(FORM_VIEW, "publication_date")
+        ok = len(date) == 10 and date[4] == "-" and date[7] == "-"
+        print(f"  {'PASS' if ok else 'FAIL'}  date reaches the picker as ISO: {date!r}")
+        if not ok:
+            failures.append(f"publication date not ISO in the form: {date!r}")
+        page.locator(".wapyt-tab", has_text="Grid View").click()
+        page.wait_for_timeout(500)
 
         print("\nReports opens the modal")
-        page.get_by_text("Reports", exact=True).first.click()
-        page.locator(".dhx_window").wait_for(timeout=15_000)
-        check("modal count", page.locator(".dhx_window").count(), 1)
-        # The form is attached and then filled from the BFF; wait for the
-        # controls to exist before counting them.
-        page.locator(".dhx_window input").first.wait_for(timeout=15_000)
-        check_at_least("modal inputs", page.locator(".dhx_window input").count(), 5)
-
-        page.wait_for_timeout(2500)
-        title = page.locator(".dhx_window input").first.input_value()
+        page.locator(".wapyt-sidebar-item", has_text="Reports").click()
+        page.locator(MODAL).wait_for(timeout=15_000)
+        check("modal visible", modal_visible(), True)
+        # The form is filled from the BFF; wait for the title to arrive.
+        page.wait_for_function(
+            f"""() => document.querySelector('{MODAL} [data-field-id="title"] input')?.value""",
+            timeout=15_000,
+        )
+        check_at_least("modal inputs", page.locator(f"{MODAL} input").count(), 5)
+        title = field_value(MODAL, "title")
         ok = bool(title.strip())
         print(f"  {'PASS' if ok else 'FAIL'}  modal populated from BFF: {title!r}")
         if not ok:
             failures.append("modal first field empty")
 
         print("\ndouble-clicking a grid row opens that book")
-        page.locator(".dhx_window .dhx_button[data-dhx-id='close']").click()
-        page.wait_for_timeout(800)
-        check("modal closed", page.locator(".dhx_window").count(), 0)
+        page.locator(".wapyt-modal-close").click()
+        page.wait_for_timeout(500)
+        check("modal closed", modal_visible(), False)
 
-        page.get_by_text("GRID VIEW").click()
+        expected = cell_text(5, 0)
+        page.locator(ROWS).nth(5).locator("td").first.dblclick()
         page.wait_for_timeout(1000)
-        target_row = page.locator(".dhx_grid .dhx_grid-row").nth(5)
-        expected = target_row.locator(".dhx_grid-cell").first.inner_text().strip()
-        target_row.dblclick()
-        page.locator(".dhx_window input").first.wait_for(timeout=15_000)
-        page.wait_for_timeout(1200)
-        shown = page.locator(".dhx_window input").first.input_value().strip()
+        shown = field_value(MODAL, "title")
         # Rendered grid text collapses runs of whitespace; the input keeps the
         # raw value. Compare on collapsed whitespace.
-        collapse = lambda text: " ".join(text.split())
         ok = bool(shown) and collapse(shown) == collapse(expected)
         print(f"  {'PASS' if ok else 'FAIL'}  form shows the double-clicked row: {shown!r}"
               + ("" if ok else f" (grid cell said {expected!r})"))
         if not ok:
             failures.append(f"dblclick row mismatch: form {shown!r} vs grid {expected!r}")
 
+        print("\nthe grid context menu opens a row")
+        page.locator(".wapyt-modal-close").click()
+        page.wait_for_timeout(500)
+        expected = cell_text(7, 0)
+        page.locator(ROWS).nth(7).locator("td").first.click(button="right")
+        page.locator(".wapyt-cmenu").wait_for(timeout=5_000)
+        page.get_by_role("menuitem", name="Edit").click()
+        page.wait_for_timeout(1000)
+        check("modal opened from the menu", modal_visible(), True)
+        shown = field_value(MODAL, "title")
+        check("menu opens the right-clicked row", collapse(shown), collapse(expected))
+        page.locator(".wapyt-modal-close").click()
+        page.wait_for_timeout(500)
+
         print("\nediting and saving persists across a reload")
-        import time as _time
-        new_title = f"SMOKE {int(_time.time())}"
-        saved_date = page.locator(
-            ".dhx_grid .dhx_grid-row").nth(5).locator(
-            ".dhx_grid-cell").nth(3).inner_text().strip()
-        page.locator(".dhx_window input").first.fill(new_title)
-        page.get_by_role("button", name="Save").click()
+        page.locator(ROWS).nth(5).locator("td").first.dblclick()
+        page.wait_for_timeout(1000)
+        new_title = f"SMOKE {int(time.time())}"
+        saved_date = cell_text(5, 3)
+        page.locator(f'{MODAL} [data-field-id="title"] input').fill(new_title)
+        page.locator(MODAL).get_by_role("button", name="Save").click()
         page.wait_for_timeout(2500)
-        # The modal is showing the row double-clicked above (index 5), so assert
-        # against that row, not row 0.
-        edited_cell = lambda: page.locator(
-            ".dhx_grid .dhx_grid-row").nth(5).locator(
-            ".dhx_grid-cell").first.inner_text().strip()
         # Closing is the only save confirmation, so it is part of the contract:
-        # the window stays put on a rejected write.
-        check("modal closes after a successful save", page.locator(".dhx_window").count(), 0)
-        check("grid row updated after save", edited_cell(), new_title)
-        # DatepickerConfig defaults to dateFormat="%d/%m/%y" and used to misread
-        # the M/D/YYYY seed dates, writing the misreading back on every save.
-        date_cell = lambda: page.locator(
-            ".dhx_grid .dhx_grid-row").nth(5).locator(
-            ".dhx_grid-cell").nth(3).inner_text().strip()
-        check("publication date survives the save", date_cell(), saved_date)
+        # the modal stays put on a rejected write.
+        check("modal closes after a successful save", modal_visible(), False)
+        check("grid row updated after save", cell_text(5, 0), new_title)
+        # The date goes through the picker as ISO and must come back as the
+        # store's M/D/YYYY, not rewritten.
+        check("publication date survives the save", cell_text(5, 3), saved_date)
 
         page.reload(wait_until="domcontentloaded")
         page.get_by_text("Book Details and Ratings").wait_for(timeout=BOOT_TIMEOUT_MS)
-        page.locator(".dhx_grid .dhx_grid-row").first.wait_for(timeout=30_000)
-        page.wait_for_timeout(1500)
-        check("survives reload (persisted to the store)", edited_cell(), new_title)
+        page.locator(ROWS).first.wait_for(timeout=30_000)
+        page.wait_for_timeout(1000)
+        check("survives reload (persisted to the store)", cell_text(5, 0), new_title)
 
         print("\nlight / dark mode")
         theme = lambda: page.evaluate(
-            "() => document.documentElement.getAttribute('data-dhx-theme')"
+            "() => document.documentElement.getAttribute('data-wapyt-theme')"
         )
+        theme_button = page.locator(".wapyt-toolbar-btn[data-id='theme']")
         # Chromium defaults to prefers-color-scheme: light and nothing has been
         # stored yet, so the app should have started from the OS preference.
         check("starts from the OS preference", theme(), "light")
-        page.get_by_text("DARK").click()
+        check("toggle offers Dark", theme_button.inner_text().strip(), "Dark")
+        theme_button.click()
         page.wait_for_timeout(600)
         check("toggle switches to dark", theme(), "dark")
-        check("toggle now offers Light", page.get_by_text("LIGHT").count(), 1)
+        check("toggle now offers Light", theme_button.inner_text().strip(), "Light")
         check("choice remembered",
               page.evaluate("() => localStorage.getItem('py_ui.theme')"), "dark")
-        # dhx themes are CSS-only, so widgets built earlier must survive it.
-        page.get_by_text("BOOK RATINGS CHART").click()
-        page.wait_for_timeout(1000)
-        check("chart survives the switch",
-              page.locator(".book-ratings-chart svg path.chart").count(), 10)
+        # wapyt themes are CSS-only, so widgets built earlier must survive it.
+        check_at_least("grid survives the switch", page.locator(ROWS).count(), 10)
         page.emulate_media(color_scheme="dark")
         page.emulate_media(color_scheme="light")
         page.wait_for_timeout(600)
