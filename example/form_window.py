@@ -1,133 +1,77 @@
 """Modal window containing a book-details form.
 
-`Window` is a plain dhxpyt class -- unlike `Layout`/`MainWindow` it has no
-`LoadUICaller` metaclass, so it does not call `load_ui()` for you. This class
-calls it explicitly at the end of `__init__`.
+The modal is built once and shown again for each book, so it does not dispose
+on close. Saving goes through the BFF; the modal closes only when the write
+lands, so a rejected save leaves the edit on screen with the error under it.
 """
 import asyncio
 import json
 
 import js
-from pyodide.ffi import create_proxy
 
-from dhxpyt.form import ButtonConfig, FormConfig, InputConfig, DatepickerConfig
-from dhxpyt.window import Window, WindowConfig
+from wapyt import Form, FormConfig, ModalConfig, ModalWindow
 
+from book_fields import book_fields, form_to_record, record_to_form
 from py_ui_data import py_ui_data
 
 
-# Label beside the control rather than above it, with minimal padding.
-COMPACT_FIELD = {
-    "labelPosition": "left",
-    "labelWidth": "130px",
-    "padding": "2px",
-}
-
-# The seed dates are M/D/YYYY with no leading zeros ("9/16/2006").
-# DatepickerConfig defaults to dateFormat="%d/%m/%y", which misreads them and
-# writes the misreading back on save, so every save corrupted the date.
-# %n and %j are the no-leading-zero month and day.
-DATE_FORMAT = "%n/%j/%Y"
-
-FIELDS = (
-    ("title", "Title"),
-    ("authors", "Authors"),
-    ("average_rating", "Rating"),
-    ("isbn13", "ISBN"),
-    ("language_code", "Language"),
-    ("num_pages", "Pages"),
-    ("publisher", "Publisher"),
-)
-
-
-class FormExample(Window):
-    def __init__(self, record=None):
-        """`record` fills the form immediately; omit it to load the first book."""
-        super().__init__(
-            config=WindowConfig(
-                title="Form Example",
-                css="dhx_widget--bordered dhx_widget--bg_white",
-                # Sized so all eight compact rows fit without scrolling and
-                # the title value is not truncated.
-                width=560,
-                height=572,
-                left=100,
-                top=100,
-                modal=True,
-                resizable=True,
-                movable=True,
-                closable=True,
-            )
-        )
+class FormExample:
+    def __init__(self, languages=()):
         self.data = py_ui_data()
-        self.form = None
-        self._initial_record = record
         self._record_id = None
         # Set by the caller to refresh the grid after a successful save.
         self.on_saved = None
-        self.load_ui()
 
-    def load_ui(self):
-        fields = [
-            InputConfig(id=field, label=label, **COMPACT_FIELD)
-            for field, label in FIELDS
-        ]
-        fields.append(
-            DatepickerConfig(
-                id="publication_date",
-                label="Publication Date",
-                dateFormat=DATE_FORMAT,
-                **COMPACT_FIELD,
-            )
+        self.modal = ModalWindow(ModalConfig(title="Form Example", width=640, height=560))
+        self.form = Form(
+            FormConfig(
+                fields=book_fields(languages),
+                columns=2,
+                submit_text="Save",
+                cancel_text="Cancel",
+            ),
+            container=self.modal.body,
         )
-        fields.append(
-            # NB: the form's ButtonConfig takes `text`, not the toolbar
-            # ButtonConfig's `value`.
-            ButtonConfig(id="save", text="Save", submit=False, padding="6px")
-        )
+        # on_submit fires only once client-side validation passes.
+        self.form.on_submit(lambda values: asyncio.ensure_future(self._save(values)))
+        self.form.on_cancel(lambda _values: self.modal.hide())
 
-        # Window.attach(name, config) is the DHTMLX pattern for creating a
-        # widget inside the window; get_widget() then returns the JS instance.
-        self.show()
-        # FormConfig(rows=...) renders controls; cols= produces an empty form.
-        cfg = FormConfig(rows=fields).to_dict()
-        self.attach("Form", js.JSON.parse(json.dumps(cfg)))
-        self.form = self.get_widget()
-        self.form.events.on("click", create_proxy(self._on_form_click))
-
-        if self._initial_record is not None:
-            self.set_record(self._initial_record)
+    def open(self, record=None):
+        """Show the modal on `record`; omit it to load the first book."""
+        self.form.clear_errors()
+        self.modal.show()
+        if record is not None:
+            self.set_record(record)
         else:
             asyncio.ensure_future(self._load_first_record())
 
     def set_record(self, record):
-        """Fill the form from a book record. Keys with no control are ignored."""
+        """Fill the form from a book record. Keys with no field are ignored."""
         self._record_id = (record or {}).get("id")
-        self.form.setValue(js.JSON.parse(json.dumps(record)))
+        self.form.set_values(record_to_form(record))
 
-    def _on_form_click(self, name, event=None):
-        if name == "save":
-            asyncio.ensure_future(self._save())
-
-    async def _save(self):
+    async def _save(self, values):
         """Write the edited fields back through the BFF, then close on success."""
+        if self._record_id is None:
+            return
+        self.form.set_busy(True)
         try:
-            if self._record_id is None:
-                return
-            values = self.form.getValue().to_py()
-            result = await self.data.update_book_async(self._record_id, values)
+            result = await self.data.update_book_async(self._record_id, form_to_record(values))
             if not result.get("ok"):
-                # Leave the window open so the edit is not lost on a failure.
-                js.console.error("save rejected: " + str(result.get("error")))
+                # Leave the modal open so the edit is not lost on a failure.
+                self.form.set_error(None, "Save rejected: " + str(result.get("error")))
                 return
             if self.on_saved is not None:
                 self.on_saved(result["record"])
-            # Closing is the confirmation: the window stays put on failure, so
+            # Closing is the confirmation: the modal stays put on failure, so
             # it disappearing is what tells you the write landed.
-            self.hide()
+            self.modal.hide()
         except Exception:
             import traceback
             js.console.error("save failed: " + traceback.format_exc())
+            self.form.set_error(None, "Save failed; see the console.")
+        finally:
+            self.form.set_busy(False)
 
     async def _load_first_record(self):
         """Populate the form from the authenticated BFF."""

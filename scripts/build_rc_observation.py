@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import importlib.metadata
 import json
@@ -19,6 +20,8 @@ SCHEMA_ID = (
     "https://github.com/pytincture/pytincture_example/contracts/"
     "rc-observation-v1.schema.json"
 )
+# The browser widgetset is declared here, not installed on the server.
+WIDGET_MODULE = Path(__file__).resolve().parents[1] / "example" / "widget.py"
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 
@@ -46,6 +49,21 @@ def _load_result(path: Path, label: str) -> tuple[dict, str]:
     if not isinstance(payload, dict):
         raise ValueError(f"{label} result must be a JSON object")
     return payload, _sha256(path)
+
+
+def _widgetset(path: Path = WIDGET_MODULE) -> str:
+    """The widgetset pin the browser installs, read the way Pytincture does:
+    literal __widgetset__ / __version__ assignments, without importing."""
+    values = {}
+    for node in ast.parse(path.read_text()).body:
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant):
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    values[target.id] = node.value.value
+    name, version = values.get("__widgetset__"), values.get("__version__")
+    if not (isinstance(name, str) and isinstance(version, str)):
+        raise ValueError(f"{path} must assign literal __widgetset__ and __version__")
+    return f"{name}=={version}"
 
 
 def _run_url(environment: Mapping[str, str]) -> str:
@@ -95,7 +113,7 @@ def build_observation(
         "application": "pytincture_example",
         "application_version": _version("pytincture_example"),
         "candidate": _version("pytincture"),
-        "widgetset": f"dhxpyt=={_version('dhxpyt')}",
+        "widgetset": _widgetset(),
         "status": "failed" if findings else "passed",
         "observed_at": _timestamp(args.observed_at),
         "commit_sha": commit_sha,
