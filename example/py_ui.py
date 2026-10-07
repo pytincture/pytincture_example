@@ -128,7 +128,7 @@ class py_ui(MainWindow):
             active="grid",
         ))
 
-        # TabWidget has no add_* helpers: widgets mount into a tab's panel.
+        # TabWidget has no add_* helpers: widgets mount on a tab's cell.
         # One filter box above the table matches across every column. Rows are
         # filled once the dataset call below returns.
         self.book_grid = DataTable(DataTableConfig(
@@ -154,7 +154,7 @@ class py_ui(MainWindow):
             resizable_columns=True,
             # Right-click offers the edit action as a second affordance.
             context_actions=[TableAction("edit", "Edit", "mdi-pencil")],
-        ), container=self._tab_host("grid"))
+        ), container=self.tabs.get_cell("grid"))
         self.book_grid.set_busy(True)
         # Selecting a row mirrors it into the Form View tab.
         self.book_grid.on_select(self.handle_grid_select)
@@ -167,25 +167,11 @@ class py_ui(MainWindow):
         self.book_form = Form(FormConfig(
             fields=book_fields(),
             columns=2,
-            # "" rather than None: FormConfig drops None values, which lets
-            # the JS default ("Save") back in.
-            submit_text="",
-        ), container=self._tab_host("form"))
+            submit_text=None,
+        ), container=self.tabs.get_cell("form"))
 
         self.books = []
         asyncio.ensure_future(self._load_dataset())
-
-    def _tab_host(self, tab_id):
-        """A full-size element inside a tab's panel, for a widget to mount on.
-
-        Not the panel itself: a widget takes over the element it mounts on,
-        including its display, and the panel's own display is what hides an
-        inactive tab.
-        """
-        host = js.document.createElement("div")
-        host.style.height = "100%"
-        self.tabs.get_cell(tab_id).getContainer().appendChild(host)
-        return host
 
     async def _load_dataset(self):
         """Fill the grid and the form's language options."""

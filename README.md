@@ -26,7 +26,7 @@ example. Pytincture finds the pin by reading the literal `__widgetset__` and
 `__version__` in `example/widget.py`, and installs the matching wheel served
 from `example/`. wapyt 0.2.0 is not on PyPI yet (PyPI has only the much older
 0.1.0), so the wheel is vendored: `wapyt-0.2.0.dev0-py3-none-any.whl`, built
-from wapyt `main` at commit `7dcc61a` with its asset manifest included. Once
+from wapyt `main` at commit `c1b0e4e` with its asset manifest included. Once
 0.2.0 is released, pin it in `widget.py` and drop the vendored file.
 
 Replacing the wheel means updating two things together: the file in

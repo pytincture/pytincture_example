@@ -44,8 +44,9 @@ BOOT_TIMEOUT_MS = 180_000
 # The grid's body rows; the header row carries no data-row-id.
 ROWS = ".wapyt-datatable tbody tr[data-row-id]"
 SELECTED = ".wapyt-datatable tbody tr[data-selected='true']"
-# The Form View tab's form, as opposed to the one in the modal.
-FORM_VIEW = ".wapyt-tab-panel .wapyt-form"
+# The Form View tab's form, as opposed to the one in the modal. Mounted on the
+# tab's cell, the form is the panel element itself.
+FORM_VIEW = ".wapyt-tab-panel.wapyt-form"
 MODAL = ".wapyt-modal"
 
 
@@ -159,8 +160,8 @@ def main() -> int:
         check_at_least("grid rows", page.locator(ROWS).count(), 10)
 
         print("\nonly the active tab is shown")
-        # Form and DataTable take over the display of the element they mount
-        # on; mounted straight onto a tab panel they un-hid the inactive tab.
+        # Form and DataTable style the panel they mount on as their own host;
+        # before wapyt#48 that un-hid the inactive tab.
         check("form view hidden behind the grid", page.locator(FORM_VIEW).is_visible(), False)
 
         print("\nrow selection highlight")
@@ -198,6 +199,8 @@ def main() -> int:
         check("form view visible", page.locator(FORM_VIEW).is_visible(), True)
         check("grid hidden behind the form", page.locator(".wapyt-datatable").is_visible(), False)
         check_at_least("form inputs", page.locator(f"{FORM_VIEW} input").count(), 5)
+        # submit_text=None hides the button (before wapyt#48 "Save" came back).
+        check("form view has no buttons", page.locator(f"{FORM_VIEW} button").count(), 0)
         shown = field_value(FORM_VIEW, "title")
         check("form shows the selected book", collapse(shown), collapse(selected_title))
         # The store keeps M/D/YYYY; the native date picker needs ISO.
