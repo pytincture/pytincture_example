@@ -14,7 +14,7 @@ authors = [
 dependencies = [
     # Pinned to the release candidate this example is qualified against; the
     # acceptance and smoke tests assert the installed version, not a literal.
-    "pytincture[password]==1.0.0rc12",
+    "pytincture[password]==1.0.0rc13",
     # No widgetset here: wapyt runs only in the browser, which installs the
     # wheel vendored in example/ (see example/widget.py). The server never
     # imports it.
