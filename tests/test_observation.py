@@ -34,6 +34,15 @@ class ObservationTests(unittest.TestCase):
             json.dumps({"status": "passed", "failures": []}) + "\n"
         )
 
+    @staticmethod
+    def widget_version():
+        sys.path.insert(0, str(ROOT / "example"))
+        try:
+            import widget
+        finally:
+            sys.path.pop(0)
+        return widget.__version__
+
     def tearDown(self):
         self.temporary.cleanup()
 
@@ -60,7 +69,6 @@ class ObservationTests(unittest.TestCase):
         version.side_effect = {
             "pytincture_example": "0.1.2",
             "pytincture": "1.0.0rc1",
-            "dhxpyt": "0.9.16",
         }.__getitem__
 
         result = observation.build_observation(self.args(), {})
@@ -68,7 +76,8 @@ class ObservationTests(unittest.TestCase):
         self.assertEqual(observation.validate_observation(result), [])
         self.assertEqual(result["status"], "passed")
         self.assertEqual(result["candidate"], "1.0.0rc1")
-        self.assertEqual(result["widgetset"], "dhxpyt==0.9.16")
+        # Read from example/widget.py, the pin the browser installs.
+        self.assertEqual(result["widgetset"], f"wapyt=={self.widget_version()}")
         self.assertEqual(
             result["result_sha256"]["browser_acceptance"],
             hashlib.sha256(self.acceptance.read_bytes()).hexdigest(),

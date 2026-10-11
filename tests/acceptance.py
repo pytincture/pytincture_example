@@ -21,6 +21,17 @@ EXAMPLE = ROOT / "example"
 BASE_URL = "http://127.0.0.1:8070"
 
 
+def _is_expected_request_failure(request) -> bool:
+    """True for the abort Pytincture makes on purpose.
+
+    It probes for a widgetset wheel served from modules_path with a HEAD it
+    aborts once the headers arrive, so Chromium reports net::ERR_ABORTED even
+    though the server answered 200. The example vendors its wapyt wheel there,
+    so this happens on every boot. Mirrors tests/ui_smoke.py.
+    """
+    return "ERR_ABORTED" in (request.failure or "") and ".whl" in request.url
+
+
 def wait_for_service(timeout: float = 30.0) -> dict:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -88,7 +99,12 @@ def main() -> None:
                 else None,
             )
             page.on("pageerror", lambda error: console_errors.append(str(error)))
-            page.on("requestfailed", lambda request: failed_requests.append(request.url))
+            page.on(
+                "requestfailed",
+                lambda request: None
+                if _is_expected_request_failure(request)
+                else failed_requests.append(request.url),
+            )
 
             page.goto(BASE_URL, wait_until="domcontentloaded")
             page.get_by_text(
@@ -99,8 +115,9 @@ def main() -> None:
             page.get_by_role("button", name="Login with Email").click()
 
             page.get_by_text("Book Details and Ratings").wait_for(timeout=120_000)
-            assert page.url == f"{BASE_URL}/py_ui"
-            assert page.locator(".dhx_grid").count() == 1
+            # Since rc12 the app page lives at /py_ui/ (the bare path 307s there).
+            assert page.url == f"{BASE_URL}/py_ui/"
+            assert page.locator(".wapyt-datatable").count() == 1
 
             bff = page.evaluate(
                 """async () => {
@@ -148,7 +165,7 @@ def main() -> None:
                     "clean_address_bar": "?" not in page.url,
                     "login_help_visible": True,
                     "authenticated_email": "demo@example.com",
-                    "grid_count": page.locator(".dhx_grid").count(),
+                    "grid_count": page.locator(".wapyt-datatable").count(),
                     "bff_status": bff["status"],
                     "console_errors": console_errors,
                     "failed_requests": failed_requests,

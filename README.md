@@ -1,27 +1,43 @@
 # Pytincture authenticated example
 
 This example qualifies the published Pytincture 1.0 release candidate with a
-real dhxpyt application and an authenticated backend-for-frontend call.
+real [wapyt](https://github.com/WAwesome-AI/wa_pytincture_widgetset)
+application and an authenticated backend-for-frontend call.
 
 ## Run locally
 
 ```bash
 python3.13 -m venv .venv
-.venv/bin/pip install --find-links example .
+.venv/bin/pip install .
 cd example
 ../.venv/bin/python run.py
 ```
 
-`--find-links example` resolves the pinned `dhxpyt` from the wheel vendored in
-`example/` rather than from PyPI. That same wheel is what the backend serves to
-the browser, so the example installs and boots with no PyPI round-trip for the
-widgetset -- previously it fetched dhxpyt from `files.pythonhosted.org` on every
-cold start, which meant it could not boot offline.
+## The widgetset
 
-Replacing the wheel means updating three things together: the file in
-`example/`, the `dhxpyt==` pin in `pyproject.toml`, and `__version__` in
-`example/widget.py`. The `.gitignore` un-ignores the pinned filename
-specifically, so stray development wheels are still kept out of git.
+The UI is built with wapyt, the MIT-licensed widgetset for Pytincture: a
+sidebar, a toolbar with a light/dark toggle, and two tabs -- a book grid with a
+filter box and a right-click menu, and a form that mirrors the selected book.
+Double-clicking a row (or Edit in the menu, or Reports in the sidebar) opens
+the book in a modal form that saves through the BFF.
+
+wapyt runs only in the browser, so it is not a Python dependency of the
+example. Pytincture finds the pin by reading the literal `__widgetset__` and
+`__version__` in `example/widget.py`, and installs the matching wheel served
+from `example/`. wapyt 0.2.0 is not on PyPI yet (PyPI has only the much older
+0.1.0), so the wheel is vendored: `wapyt-0.2.0.dev0-py3-none-any.whl`, built
+from wapyt `main` at commit `c1b0e4e` with its asset manifest included. Once
+0.2.0 is released, pin it in `widget.py` and drop the vendored file.
+
+Replacing the wheel means updating two things together: the file in
+`example/` and `__version__` in `example/widget.py`, plus the un-ignored
+filename in `.gitignore`, which keeps stray development wheels out of git. To
+build one from a wapyt checkout:
+
+```bash
+python3 scripts/generate_assets_manifest.py . --check   # in the wapyt checkout
+python3 -m pip wheel . --no-deps -w dist
+```
 
 Open <http://localhost:8070/> and sign in with the credentials displayed on
 the login page:
@@ -29,7 +45,7 @@ the login page:
 - email: `demo@example.com`
 - password: `demo-password`
 
-The browser address remains `/py_ui` after login; cache-busting UUIDs are added
+The browser address remains `/py_ui/` after login; cache-busting UUIDs are added
 only to frontend and application-resource requests.
 
 ## Run with Docker
@@ -53,7 +69,7 @@ BriskDB is available as a drop-in alternative, exercising the same BFF code
 through a sharded-SQLite engine:
 
 ```bash
-.venv/bin/pip install --find-links example '.[briskdb]'
+.venv/bin/pip install '.[briskdb]'
 PYTINCTURE_EXAMPLE_STORE=briskdb ../.venv/bin/python run.py
 ```
 
@@ -85,7 +101,7 @@ as a JSON workflow artifact.
 Run the same profile locally:
 
 ```bash
-.venv/bin/pip install --find-links example '.[load-test]'
+.venv/bin/pip install '.[load-test]'
 .venv/bin/python tests/load_test.py --output load-results.json
 ```
 
@@ -98,7 +114,7 @@ deployment-specific stages, page sizes, latency, and throughput budgets.
 
 CI combines the authenticated browser result and paginated load result into a
 versioned `rc1-observation.json` document. It records the exact example commit,
-Pytincture candidate, dhxpyt widgetset, UTC timestamp, Actions run URL,
+Pytincture candidate, widgetset pin (read from `example/widget.py`), UTC timestamp, Actions run URL,
 environment, SHA-256 hash of each raw result, embedded measurements, and any
 automatically detected findings. The document follows
 [`contracts/rc-observation-v1.schema.json`](contracts/rc-observation-v1.schema.json)

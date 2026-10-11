@@ -118,16 +118,17 @@ async def prepare_client(base_url: str) -> tuple[httpx.AsyncClient, float, float
             },
         )
         login_ms = (time.perf_counter() - login_started) * 1000
+        # Since rc12 the application page lives at /<app>/; the bare path 307s.
         if (
             login.status_code != 303
-            or login.headers.get("location") != f"/{APPLICATION}"
+            or login.headers.get("location") != f"/{APPLICATION}/"
         ):
             raise RuntimeError(
                 f"login returned HTTP {login.status_code}: {login.text[:200]}"
             )
 
         app_started = time.perf_counter()
-        app = await client.get(f"/{APPLICATION}")
+        app = await client.get(f"/{APPLICATION}/")
         app_ms = (time.perf_counter() - app_started) * 1000
         app.raise_for_status()
         if "pytincture.js" not in app.text:
