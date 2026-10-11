@@ -12,14 +12,20 @@ Two supported entrypoints:
 
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import store
 from pytincture import PytinctureConfig, create_app
 
 
 HERE = Path(__file__).resolve().parent
-HOST = "127.0.0.1"
-PORT = 8070
+HOST = os.getenv("PYTINCTURE_EXAMPLE_HOST", "127.0.0.1")
+PORT = int(os.getenv("PORT", "8070"))
+PUBLIC_ORIGIN = os.getenv("PYTINCTURE_EXAMPLE_PUBLIC_ORIGIN", "").rstrip("/")
+SESSION_SECRET = os.getenv("PYTINCTURE_EXAMPLE_SESSION_SECRET", "")
+if PUBLIC_ORIGIN and not SESSION_SECRET:
+    raise RuntimeError("Public deployment requires PYTINCTURE_EXAMPLE_SESSION_SECRET")
+SESSION_SECRET = SESSION_SECRET or "pytincture-example-session-secret-0123456789abcdef"
 
 DEMO_EMAIL = "demo@example.com"
 DEMO_PASSWORD = "demo-password"
@@ -107,27 +113,36 @@ app = create_app(
             "AUTH_PASSWORD_HASHES": DEMO_PASSWORD_HASH,
             "LOGIN_HELP_TEXT": f"Demo credentials: {DEMO_EMAIL} / {DEMO_PASSWORD}",
         },
-        # The disposable example serves plain HTTP on localhost. Production
-        # deployments must use HTTPS and leave secure cookies enabled.
-        #
-        # Pytincture 1.0.0rc4 fails startup for authenticated deployments unless
-        # allowed_hosts holds exact hostnames and canonical_origin is one HTTPS
-        # origin. allow_development_auth_origin is the documented loopback-only
-        # opt-out for local HTTP auth testing; it requires session_https_only to
-        # be False and cannot be combined with trusted proxy headers or the
-        # production host/origin controls.
-        allow_development_auth_origin=True,
-        session_https_only=False,
-        session_secret=os.getenv(
-            "PYTINCTURE_EXAMPLE_SESSION_SECRET",
-            "pytincture-example-session-secret-0123456789abcdef",
-        ),
+        # Fly terminates HTTPS; local development keeps its loopback HTTP flow.
+        allow_development_auth_origin=not bool(PUBLIC_ORIGIN),
+        session_https_only=bool(PUBLIC_ORIGIN),
+        allowed_hosts=(urlsplit(PUBLIC_ORIGIN).hostname,) if PUBLIC_ORIGIN else (),
+        canonical_origin=PUBLIC_ORIGIN or None,
+        trusted_proxy_headers=bool(PUBLIC_ORIGIN),
+        session_secret=SESSION_SECRET,
+        api_docs_mode=os.getenv("PYTINCTURE_API_DOCS_MODE", "public"),
+        diagnostic_details_mode="minimal" if PUBLIC_ORIGIN else "public",
         **limit_overrides(),
     )
 )
+
+LOGIN_DATABASE = os.getenv("PYTINCTURE_EXAMPLE_LOGIN_DB", "")
+if LOGIN_DATABASE:
+    from example_metrics import LoginMetricsMiddleware, LoginStore
+
+    app.add_middleware(
+        LoginMetricsMiddleware,
+        store=LoginStore(LOGIN_DATABASE),
+        secret=SESSION_SECRET,
+        secure=bool(PUBLIC_ORIGIN),
+    )
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host=HOST, port=PORT)
+    uvicorn.run(
+        app, host=HOST, port=PORT,
+        proxy_headers=bool(PUBLIC_ORIGIN),
+        forwarded_allow_ips="*" if PUBLIC_ORIGIN else "127.0.0.1",
+    )

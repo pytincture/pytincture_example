@@ -1,0 +1,46 @@
+app = "pytincture-example"
+primary_region = "iad"
+kill_signal = "SIGTERM"
+kill_timeout = 15
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PYTHONUNBUFFERED = "1"
+  PYTINCTURE_EXAMPLE_HOST = "0.0.0.0"
+  PORT = "8070"
+  PYTINCTURE_EXAMPLE_PUBLIC_ORIGIN = "https://pytincture-example.fly.dev"
+  PYTINCTURE_EXAMPLE_DB = "/data/books.db"
+  PYTINCTURE_EXAMPLE_LOGIN_DB = "/data/login_metrics.sqlite3"
+  PYTINCTURE_API_DOCS_MODE = "disabled"
+
+[http_service]
+  internal_port = 8070
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 20
+    hard_limit = 40
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    timeout = "5s"
+    method = "GET"
+    path = "/healthz"
+    [http_service.checks.headers]
+      Host = "pytincture-example.fly.dev"
+
+[[mounts]]
+  source = "example_data"
+  destination = "/data"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "512mb"

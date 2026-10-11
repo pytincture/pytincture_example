@@ -60,6 +60,48 @@ demo outside a disposable local environment. The launcher disables secure-only
 cookies for its plain-HTTP localhost workflow; production deployments must use
 HTTPS with `AUTH_SESSION_HTTPS_ONLY=true`.
 
+## Public Fly.io demo and login counts
+
+The live demo is <https://pytincture-example.fly.dev/>. It uses the demo
+credentials above, HTTPS session cookies, and one Fly Machine in `iad` with
+`min_machines_running = 0`: it stops while idle and starts on the next request.
+The first visit after an idle stop can take a little longer.
+
+Deploy from the latest `main`:
+
+```bash
+git pull --ff-only origin main
+flyctl deploy --ha=false
+```
+
+Initial setup requires the `pytincture-example` app, one 1 GB `example_data`
+volume in `iad`, and a random `PYTINCTURE_EXAMPLE_SESSION_SECRET` set as a Fly
+secret. `fly.toml` configures the HTTPS origin, public bind address, health
+check, and persistent paths. Keep one machine: each volume is local to its
+machine, and independently scaled SQLite instances would have separate data.
+
+Successful email/password logins are counted in `/data/login_metrics.sqlite3`
+on the persistent volume. Counts survive idle stops and redeploys. View the
+private all-time totals and daily counts for the last 30 UTC days with:
+
+```bash
+curl --fail --silent https://pytincture-example.fly.dev/healthz
+flyctl ssh console -a pytincture-example -C "python -m example_metrics"
+```
+
+The health request wakes the machine if it is stopped. Add `--days 7` to the
+Python command for a shorter daily report. There is no public metrics endpoint.
+The report includes `successful_logins` and `unique_browsers`. Because the demo
+account is shared, distinct browsers are an estimate of visitors rather than
+identified people: clearing cookies or using another browser counts again.
+A signed, HTTP-only visitor cookie lasts one year. Only hashes of random
+browser/session identifiers and login times are stored; no emails, passwords
+or IP addresses are recorded in the metrics database. Failed logins and page
+refreshes are not counted.
+
+For local tracking, set `PYTINCTURE_EXAMPLE_LOGIN_DB` to a database path outside
+`example/`. Tracking is disabled locally when this variable is unset.
+
 ## Data store
 
 The example stores books in SQLite by default. Nothing extra to install; the

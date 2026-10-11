@@ -4,3 +4,5 @@
 *.egg-info
 __pycache__
 tests
+build
+.pytest_cache
