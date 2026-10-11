@@ -1,7 +1,8 @@
 """
 Example application using a wapyt MainWindow subclass and layout management:
 a collapsible sidebar, a toolbar with a light/dark toggle, and a tab widget
-holding the book grid and a form that mirrors the selected book.
+holding the book grid, a form that mirrors the selected book, and a media tab
+whose audio bar stays docked to the window while the other tabs are in use.
 """
 import asyncio
 import json
@@ -34,6 +35,7 @@ from wapyt import (
 )
 from book_fields import book_fields, record_to_form
 from form_window import FormExample
+from media_view import MediaView
 from py_ui_data import py_ui_data
 
 # Name the entrypoint class for Pytincture rather than relying on detection.
@@ -124,6 +126,7 @@ class py_ui(MainWindow):
             tabs=[
                 TabConfig(id="grid", title="Grid View"),
                 TabConfig(id="form", title="Form View"),
+                TabConfig(id="media", title="Media"),
             ],
             active="grid",
         ))
@@ -170,8 +173,13 @@ class py_ui(MainWindow):
             submit_text=None,
         ), container=self.tabs.get_cell("form"))
 
+        # The Media tab builds its own widgets, and a docked audio bar that
+        # outlives tab changes; the sidebar's Media item opens it.
+        self.media = MediaView(self.tabs, "media")
+
         self.books = []
         asyncio.ensure_future(self._load_dataset())
+        asyncio.ensure_future(self.media.load())
 
     async def _load_dataset(self):
         """Fill the grid and the form's language options."""
@@ -250,6 +258,8 @@ class py_ui(MainWindow):
     def handle_sidebar_select(self, payload):
         if payload["id"] == "reports":
             self.show_report_form()
+        elif payload["id"] == "media":
+            self.tabs.set_active("media")
 
     def handle_grid_select(self, payload):
         rows = payload.get("rows") or []

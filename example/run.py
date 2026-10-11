@@ -15,6 +15,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 import store
+from media_library import router as media_router
 from pytincture import PytinctureConfig, create_app
 
 
@@ -125,6 +126,10 @@ app = create_app(
         **limit_overrides(),
     )
 )
+
+# Pytincture serves Python modules, not media, so the Media tab's clips get a
+# route of their own. It checks the session itself (see media_library.py).
+app.include_router(media_router)
 
 LOGIN_DATABASE = os.getenv("PYTINCTURE_EXAMPLE_LOGIN_DB", "")
 if LOGIN_DATABASE:

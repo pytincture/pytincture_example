@@ -6,6 +6,7 @@ file I/O in here -- never in browser modules.
 """
 import json
 
+import media_library
 import store
 from pytincture.dataclass import backend_for_frontend
 
@@ -36,6 +37,10 @@ class py_ui_data:
             "total": total,
             "has_more": offset + len(items) < total,
         }
+
+    def media_library(self):
+        """What the Media tab can play: titles, credits and the URLs to fetch."""
+        return media_library.library()
 
     def update_book(self, book_id, fields):
         """Persist edits to one book and return the stored row.
