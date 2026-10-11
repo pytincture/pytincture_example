@@ -16,17 +16,17 @@ cd example
 ## The widgetset
 
 The UI is built with wapyt, the MIT-licensed widgetset for Pytincture: a
-sidebar, a toolbar with a light/dark toggle, and two tabs -- a book grid with a
-filter box and a right-click menu, and a form that mirrors the selected book.
-Double-clicking a row (or Edit in the menu, or Reports in the sidebar) opens
-the book in a modal form that saves through the BFF.
+sidebar, a toolbar with a light/dark toggle, and three tabs -- a book grid with
+a filter box and a right-click menu, a form that mirrors the selected book, and
+a media tab. Double-clicking a row (or Edit in the menu, or Reports in the
+sidebar) opens the book in a modal form that saves through the BFF.
 
 wapyt runs only in the browser, so it is not a Python dependency of the
 example. Pytincture finds the pin by reading the literal `__widgetset__` and
 `__version__` in `example/widget.py`, and installs the matching wheel served
 from `example/`. Pytincture does not fetch a widgetset from PyPI by itself, so
-the wheel is vendored: `wapyt-0.2.0.dev1-py3-none-any.whl`, the unmodified
-[PyPI release](https://pypi.org/project/wapyt/0.2.0.dev1/), which carries its
+the wheel is vendored: `wapyt-0.2.0-py3-none-any.whl`, the unmodified
+[PyPI release](https://pypi.org/project/wapyt/0.2.0/), which carries its
 own asset manifest.
 
 Moving to another wapyt release means updating three things together: the
@@ -36,7 +36,7 @@ fetch a release:
 
 ```bash
 cd example
-python3 -m pip download --no-deps wapyt==0.2.0.dev1 -d .
+python3 -m pip download --no-deps wapyt==0.2.0 -d .
 ```
 
 Open <http://localhost:8070/> and sign in with the credentials displayed on
@@ -47,6 +47,37 @@ the login page:
 
 The browser address remains `/py_ui/` after login; cache-busting UUIDs are added
 only to frontend and application-resource requests.
+
+## The Media tab
+
+The Media tab (also the sidebar's Media item) shows wapyt's `MediaPlayer` in
+two of its shapes, built in `example/media_view.py`:
+
+- **A docked audio bar.** Picking a reading queues all four and plays the one
+  you picked in a bar at the foot of the window. The bar is mounted on
+  `<body>`, so it keeps playing while you go back to the grid, and the layout
+  shrinks to make room for it. It has a Like button of the app's own beside
+  the standard controls.
+- **A film clip in place**, with a WebVTT caption track. The two players share
+  an exclusive group, so starting one pauses the other.
+
+The titles and URLs come from the BFF (`py_ui_data.media_library`). The files
+come from `/example-media/<name>`, a plain route in `example/media_library.py`
+that checks the session itself and answers Range requests so the players can
+seek.
+
+Pytincture's Content-Security-Policy has no `media-src`, so `default-src
+'self'` applies: media has to be a plain file on the app's own origin. HLS
+streams (they need `blob:`) and media on a CDN are refused by that policy, so
+the example shows neither.
+
+The clips in `example/media/` are short excerpts (2.1 MB in total):
+
+| Files | Source | Licence |
+|---|---|---|
+| `pride-and-prejudice.mp3`, `alice-in-wonderland.mp3`, `a-scandal-in-bohemia.mp3`, `moby-dick.mp3` | [LibriVox](https://librivox.org/) recordings, from archive.org | Public domain |
+| `big-buck-bunny.mp4`, `big-buck-bunny.jpg` | [Big Buck Bunny](https://peach.blender.org/), (c) 2008 Blender Foundation | [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) |
+| `big-buck-bunny.en.vtt` | Descriptive captions written for this example | MIT, with the example |
 
 ## Run with Docker
 

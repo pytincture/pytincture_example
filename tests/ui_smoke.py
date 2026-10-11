@@ -14,6 +14,8 @@ asserts the things that have actually broken before:
   * light/dark follows the OS, toggles, and is remembered
   * the Reports sidebar item opens the modal and fills it
   * a successful save closes the modal
+  * the Media tab plays a reading in the docked audio bar, which keeps playing
+    on the other tabs; the Like button toggles; starting the film pauses it
   * no console errors, no failed requests
 
 Setup (once):
@@ -41,9 +43,17 @@ EMAIL = "demo@example.com"
 PASSWORD = "demo-password"
 BOOT_TIMEOUT_MS = 180_000
 
+# The book grid mounts on its tab's panel, which tells it apart from the Media
+# tab's table of readings.
+GRID = ".wapyt-tab-panel.wapyt-datatable"
 # The grid's body rows; the header row carries no data-row-id.
-ROWS = ".wapyt-datatable tbody tr[data-row-id]"
-SELECTED = ".wapyt-datatable tbody tr[data-selected='true']"
+ROWS = f"{GRID} tbody tr[data-row-id]"
+SELECTED = f"{GRID} tbody tr[data-selected='true']"
+# The Media tab: its table of readings, the film player, and the audio bar,
+# which is docked on <body> rather than inside the tab.
+READINGS = "#example-media-readings tbody tr[data-row-id]"
+FILM = "#example-media-film"
+DOCK = "body > div > .wapyt-media"
 # The Form View tab's form, as opposed to the one in the modal. Mounted on the
 # tab's cell, the form is the panel element itself.
 FORM_VIEW = ".wapyt-tab-panel.wapyt-form"
@@ -68,7 +78,10 @@ def _is_expected_request_failure(request) -> bool:
     suite for anyone developing against a locally built widgetset.
     """
     failure = (request.failure or "") if hasattr(request, "failure") else ""
-    return "ERR_ABORTED" in failure and ".whl" in request.url
+    # A browser also stops fetching a media file once it has buffered enough.
+    return "ERR_ABORTED" in failure and (
+        ".whl" in request.url or "/example-media/" in request.url
+    )
 
 
 def wait_for_service(timeout: float = 30.0) -> dict:
@@ -152,8 +165,10 @@ def main() -> int:
         print("\nwidgets built exactly once")
         # The heading attaches slightly before the widgets finish painting.
         page.locator(".wapyt-datatable").first.wait_for(timeout=60_000)
-        for selector in (".wapyt-datatable", ".wapyt-toolbar", ".wapyt-sidebar", ".wapyt-tabwidget"):
+        for selector in (GRID, ".wapyt-toolbar", ".wapyt-sidebar", ".wapyt-tabwidget"):
             check(f"{selector} count", page.locator(selector).count(), 1)
+        # The film player and the docked audio bar.
+        check(".wapyt-media count", page.locator(".wapyt-media").count(), 2)
 
         print("\ngrid populated from the BFF")
         page.locator(ROWS).first.wait_for(timeout=30_000)
@@ -197,7 +212,7 @@ def main() -> int:
         page.locator(".wapyt-tab", has_text="Form View").click()
         page.wait_for_timeout(800)
         check("form view visible", page.locator(FORM_VIEW).is_visible(), True)
-        check("grid hidden behind the form", page.locator(".wapyt-datatable").is_visible(), False)
+        check("grid hidden behind the form", page.locator(GRID).is_visible(), False)
         check_at_least("form inputs", page.locator(f"{FORM_VIEW} input").count(), 5)
         # submit_text=None hides the button (before wapyt#48 "Save" came back).
         check("form view has no buttons", page.locator(f"{FORM_VIEW} button").count(), 0)
@@ -280,6 +295,110 @@ def main() -> int:
         page.locator(ROWS).first.wait_for(timeout=30_000)
         page.wait_for_timeout(1000)
         check("survives reload (persisted to the store)", cell_text(5, 0), new_title)
+
+        print("\nMedia tab")
+
+        def players() -> dict:
+            """Each player's media element: what it holds and whether it plays."""
+            return page.evaluate(
+                """([film, dock]) => Object.fromEntries(
+                    [['film', film], ['dock', dock]].map(([name, selector]) => {
+                        const media = document.querySelector(selector + ' video, ' + selector + ' audio');
+                        return [name, media && {
+                            file: (media.currentSrc || '').split('/').pop(),
+                            paused: media.paused,
+                            time: media.currentTime,
+                            captions: [...media.textTracks].map(t => t.mode),
+                        }];
+                    }))""",
+                [FILM, DOCK],
+            )
+
+        def grid_bottom() -> float:
+            return page.evaluate(
+                "selector => document.querySelector(selector).getBoundingClientRect().bottom", GRID
+            )
+
+        check("audio bar hidden with nothing queued", page.locator(DOCK).is_visible(), False)
+        grid_bottom_before = grid_bottom()
+        page.locator(".wapyt-sidebar-item", has_text="Media").first.click()
+        page.locator(READINGS).first.wait_for(timeout=15_000)
+        check("sidebar opens the Media tab", page.locator(FILM).is_visible(), True)
+        check("readings listed from the BFF", page.locator(READINGS).count(), 4)
+        page.wait_for_function(
+            f"() => document.querySelector('{FILM} video')?.textTracks.length === 1",
+            timeout=15_000,
+        )
+        check("film has its caption track showing", players()["film"]["captions"], ["showing"])
+
+        page.locator(READINGS).nth(3).locator("td").first.click()
+        page.wait_for_function(
+            f"""() => {{
+                const media = document.querySelector('{DOCK} video, {DOCK} audio');
+                return media && !media.paused && media.currentTime > 0.5;
+            }}""",
+            timeout=15_000,
+        )
+        check("audio bar docked and visible", page.locator(DOCK).is_visible(), True)
+        check("the picked reading is playing", players()["dock"]["file"], "moby-dick.mp3")
+        check("bar names the reading",
+              page.locator(f"{DOCK} .wapyt-media-title").inner_text().strip(), "Moby-Dick")
+        check("the whole list is queued",
+              page.locator(f"{DOCK} .wapyt-media-queue").inner_text().strip().split(" · ")[0],
+              "4 of 4")
+
+        like = page.locator(f"{DOCK} .wapyt-media-action")
+        check("Like starts unpressed", like.get_attribute("aria-pressed"), "false")
+        like.click()
+        page.wait_for_timeout(400)
+        check("Like toggles on", like.get_attribute("aria-pressed"), "true")
+
+        page.locator(f"{DOCK} .wapyt-media-prev").click()
+        page.wait_for_function(
+            f"""() => (document.querySelector('{DOCK} video, {DOCK} audio')?.currentSrc || '')
+                .endsWith('a-scandal-in-bohemia.mp3')""",
+            timeout=15_000,
+        )
+        page.wait_for_timeout(600)
+        check("the table follows the player",
+              page.locator("#example-media-readings tr[data-selected='true']").get_attribute("data-row-id"),
+              "a-scandal-in-bohemia")
+        check("Like is per reading", like.get_attribute("aria-pressed"), "false")
+
+        page.locator(".wapyt-tab", has_text="Grid View").click()
+        page.wait_for_timeout(1200)
+        check("audio bar stays on the grid tab", page.locator(DOCK).is_visible(), True)
+        check("still playing on the grid tab", players()["dock"]["paused"], False)
+        # The dock pads the page by its own height, and the full-height
+        # layout gives that much up, so the bar never covers the grid's rows.
+        dock_height = page.locator(DOCK).bounding_box()["height"]
+        shrunk = grid_bottom_before - grid_bottom()
+        ok = shrunk >= dock_height - 1
+        print(f"  {'PASS' if ok else 'FAIL'}  the grid makes room for the bar: "
+              f"{shrunk:.0f}px for a {dock_height:.0f}px bar")
+        if not ok:
+            failures.append(f"grid gave up {shrunk:.0f}px for a {dock_height:.0f}px audio bar")
+
+        page.locator(".wapyt-tab", has_text="Media").click()
+        page.wait_for_timeout(500)
+        # Playwright's bundled Chromium may lack H.264; the exclusive group
+        # can only be exercised when the film can actually start.
+        can_play_film = page.evaluate(
+            """() => document.createElement('video')
+                .canPlayType('video/mp4; codecs="avc1.64001e, mp4a.40.2"') !== ''"""
+        )
+        if can_play_film:
+            page.locator(f"{FILM} .wapyt-media-bigplay").click()
+            page.wait_for_function(
+                f"() => {{ const v = document.querySelector('{FILM} video'); return !v.paused && v.currentTime > 0.3; }}",
+                timeout=15_000,
+            )
+            check("starting the film pauses the reading", players()["dock"]["paused"], True)
+            page.evaluate(f"() => document.querySelector('{FILM} video').pause()")
+        else:
+            print("  SKIP  film playback: this browser has no H.264 decoder")
+        page.locator(".wapyt-tab", has_text="Grid View").click()
+        page.wait_for_timeout(500)
 
         print("\nlight / dark mode")
         theme = lambda: page.evaluate(

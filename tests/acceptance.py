@@ -28,8 +28,12 @@ def _is_expected_request_failure(request) -> bool:
     aborts once the headers arrive, so Chromium reports net::ERR_ABORTED even
     though the server answered 200. The example vendors its wapyt wheel there,
     so this happens on every boot. Mirrors tests/ui_smoke.py.
+
+    A browser also stops fetching a media file once it has buffered enough,
+    which Chromium reports the same way.
     """
-    return "ERR_ABORTED" in (request.failure or "") and ".whl" in request.url
+    aborted = "ERR_ABORTED" in (request.failure or "")
+    return aborted and (".whl" in request.url or "/example-media/" in request.url)
 
 
 def wait_for_service(timeout: float = 30.0) -> dict:
@@ -117,7 +121,9 @@ def main() -> None:
             page.get_by_text("Book Details and Ratings").wait_for(timeout=120_000)
             # Since rc12 the app page lives at /py_ui/ (the bare path 307s there).
             assert page.url == f"{BASE_URL}/py_ui/"
-            assert page.locator(".wapyt-datatable").count() == 1
+            # The book grid mounts on its tab panel; the Media tab has a
+            # second table of its own.
+            assert page.locator(".wapyt-tab-panel.wapyt-datatable").count() == 1
 
             bff = page.evaluate(
                 """async () => {
@@ -148,6 +154,24 @@ def main() -> None:
                 }"""
             )
             assert bff["status"] == 200
+
+            # The Media tab's clips come from a plain route that checks the
+            # session itself and answers Range requests, so players can seek.
+            media = page.evaluate(
+                """async () => {
+                    const response = await fetch(
+                        '/example-media/moby-dick.mp3',
+                        {headers: {Range: 'bytes=0-1023'}},
+                    );
+                    const body = await response.arrayBuffer();
+                    return {
+                        status: response.status,
+                        type: response.headers.get('content-type'),
+                        bytes: body.byteLength,
+                    };
+                }"""
+            )
+            assert media == {"status": 206, "type": "audio/mpeg", "bytes": 1024}, media
             assert isinstance(json.loads(bff["body"]), str)
             assert not console_errors, console_errors
             assert not failed_requests, failed_requests
@@ -165,7 +189,7 @@ def main() -> None:
                     "clean_address_bar": "?" not in page.url,
                     "login_help_visible": True,
                     "authenticated_email": "demo@example.com",
-                    "grid_count": page.locator(".wapyt-datatable").count(),
+                    "grid_count": page.locator(".wapyt-tab-panel.wapyt-datatable").count(),
                     "bff_status": bff["status"],
                     "console_errors": console_errors,
                     "failed_requests": failed_requests,
