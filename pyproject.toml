@@ -7,7 +7,7 @@ name = "pytincture_example"
 version = "0.1.2"
 description = "UI Example"
 readme = "README.md"
-license = { text = "GNU General Public License v2.0" }
+license = { text = "MIT" }
 authors = [
     { name = "Your Name", email = "schapman1974@gmail.com" }
 ]

@@ -36,7 +36,7 @@ from book_fields import book_fields, record_to_form
 from form_window import FormExample
 from py_ui_data import py_ui_data
 
-# Pytincture only auto-detects dhxpyt's MainWindow; name the wapyt one.
+# Name the entrypoint class for Pytincture rather than relying on detection.
 APP_ENTRYPOINT = "py_ui"
 
 
