@@ -24,19 +24,19 @@ the book in a modal form that saves through the BFF.
 wapyt runs only in the browser, so it is not a Python dependency of the
 example. Pytincture finds the pin by reading the literal `__widgetset__` and
 `__version__` in `example/widget.py`, and installs the matching wheel served
-from `example/`. wapyt 0.2.0 is not on PyPI yet (PyPI has only the much older
-0.1.0), so the wheel is vendored: `wapyt-0.2.0.dev0-py3-none-any.whl`, built
-from wapyt `main` at commit `c1b0e4e` with its asset manifest included. Once
-0.2.0 is released, pin it in `widget.py` and drop the vendored file.
+from `example/`. Pytincture does not fetch a widgetset from PyPI by itself, so
+the wheel is vendored: `wapyt-0.2.0.dev1-py3-none-any.whl`, the unmodified
+[PyPI release](https://pypi.org/project/wapyt/0.2.0.dev1/), which carries its
+own asset manifest.
 
-Replacing the wheel means updating two things together: the file in
-`example/` and `__version__` in `example/widget.py`, plus the un-ignored
+Moving to another wapyt release means updating three things together: the
+file in `example/`, `__version__` in `example/widget.py`, and the un-ignored
 filename in `.gitignore`, which keeps stray development wheels out of git. To
-build one from a wapyt checkout:
+fetch a release:
 
 ```bash
-python3 scripts/generate_assets_manifest.py . --check   # in the wapyt checkout
-python3 -m pip wheel . --no-deps -w dist
+cd example
+python3 -m pip download --no-deps wapyt==0.2.0.dev1 -d .
 ```
 
 Open <http://localhost:8070/> and sign in with the credentials displayed on
